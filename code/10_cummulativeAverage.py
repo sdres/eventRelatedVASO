@@ -505,5 +505,5 @@ for focus in ['v1']:
     plt.yticks(fontsize=18)
     plt.legend(loc='upper right', fontsize=20)
     plt.ylim(0,30)
-    plt.savefig(f'{root}/stabilizingPerEvent.png', bbox_inches = "tight")
+    plt.savefig(f'../results/stabilizingPerEvent.png', bbox_inches = "tight")
     plt.show()
