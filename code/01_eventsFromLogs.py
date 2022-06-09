@@ -7,7 +7,7 @@ import re
 # define root dir
 root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
 # define subjects to work on
-subs = ['sub-05', 'sub-06', 'sub-07']
+subs = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
 
 
 for sub in subs:
@@ -47,9 +47,9 @@ for sub in subs:
         stimStop = []
         # loop over lines and fine stimulation start and stop times
         for index, row in logFile.iterrows():
-            if re.search('stimulation started', logFile['event'][index]):
+            if re.search('visual stimulation started', logFile['event'][index]):
                 stimStart.append(logFile['startTime'][index])
-            if re.search('stimulation stopped', logFile['event'][index]):
+            if re.search('visual stimulation stopped', logFile['event'][index]):
                 stimStop.append(logFile['startTime'][index])
 
         # convert lists to arrays and compute stimulation durations
