@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import os
 
 subs = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
-# subs = ['sub-05']
+subs = ['sub-05']
 
 
 root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
@@ -179,26 +179,6 @@ s1Palette = {
 
 palettes = [v1Palette,s1Palette]
 
-for sub in subs:
-    for focus, cmap in zip(['v1','s1'],palettes):
-        sns.lineplot(data=blockData.loc[(blockData['subject']==sub)&(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = cmap)
-
-
-        plt.axvspan(4, 4+(30/tr), color='grey', alpha=0.2, lw=0, label = 'stimulation on')
-        plt.ylabel('% signal change', fontsize=24)
-        plt.xlabel('Time (s)', fontsize=24)
-        plt.title(f"{sub} Event-Related Average", fontsize=24, pad=20)
-        plt.legend(loc='lower center', fontsize=14)
-
-
-        values = (np.arange(-4,len(blockData['x'].unique())-4,4)*tr).round().astype(int)
-        spacing = np.arange(0,len(blockData['x'].unique()),4)
-
-        plt.xticks(spacing,values, fontsize=18)
-        plt.yticks(fontsize=18)
-        # plt.savefig(f'{root}/{sub}_{focus}_BlockResults.png', bbox_inches = "tight")
-        plt.show()
-
 plt.style.use('dark_background')
 
 for focus in ['v1','s1']:
@@ -223,66 +203,172 @@ for focus in ['v1','s1']:
 
 
 
+
 subList = []
-runList = []
+dataList = []
 modalityList = []
 layerList = []
-timepointList = []
-dataList = []
-layers = {'1':'deep','2':'middle','3':'superficial'}
-
-for sub in ['sub-14']:
-    runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-block*_run-00*_cbv.nii.gz'))
-
-    for run in runs:
-
-        base = os.path.basename(run).rsplit('.', 2)[0][:-4]
-        print(base)
-        if 'ses-001' in base:
-            ses = 'ses-001'
-        else:
-            ses= 'ses-002'
+stimTypeList = []
+focusList = []
+contrastList = []
+runList = []
 
 
-        if sub == 'sub-09' and '4' in run:
-            print('skipping')
-            continue
-        for modality in ['BOLD', 'VASO']:
-            for timepoint in range(1,41):
-                dataFile = f'{root}/derivatives/{sub}/{ses}/{base}_{modality}_layers_FIR.feat/stats/pe{timepoint}.nii.gz'
-                dataNii = nb.load(dataFile)
-                data = dataNii.get_fdata()
-                for layer in layers.keys():
-                    subList.append(sub)
-                    runList.append(base)
-                    modalityList.append(modality)
-                    layerList.append(layers[layer])
-                    timepointList.append(timepoint)
-                    if modality =='BOLD':
-                        dataList.append(data[int(layer)-1])
-                    if modality =='VASO':
-                        dataList.append(-data[int(layer)-1])
+### block profiles
 
-                # dataFile = f'{root}/derivatives/{sub}/ses-001/{base}_{modality}_vessel_FIR.feat/stats/pe{timepoint}.nii.gz'
-                # dataNii = nb.load(dataFile)
-                # data = dataNii.get_fdata()
-                #
-                # subList.append(sub)
-                # runList.append(base)
-                # modalityList.append(modality)
-                # layerList.append('vessel')
-                # timepointList.append(timepoint)
-                # if modality =='BOLD':
-                #     dataList.append(data[0])
-                # if modality =='VASO':
-                #     dataList.append(-data[0])
+for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
+# for sub in ['sub-12']:
+    # allRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
+    print(sub)
 
-FIRdata = pd.DataFrame({'subject':subList, 'run':runList, 'layer':layerList, 'modality':modalityList, 'data':dataList, 'volume':timepointList})
+    blockRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-block*run-00*_cbv.nii.gz'))
 
-for sub in ['sub-14']:
-    fig, axes = plt.subplots(1,2)
-    for i, modality in enumerate(['BOLD', 'VASO']):
-        tmp = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['subject']==sub)]
-        sns.lineplot(ax = axes[i], data=tmp, x="volume", y="data", hue='layer')
-    plt.suptitle(sub, fontsize=20)
+    # see whether there are multiple sessions
+    sessions = []
+    for run in blockRuns:
+        if 'ses-001' in run:
+            sessions.append('ses-001')
+        if 'ses-002' in run:
+            sessions.append('ses-002')
+    sessions = set(sessions)
+
+    for ses in sessions:
+        print(f'{ses}')
+        focuses = []
+        for focus in ['v1', 's1']:
+            if not sub == 'sub-07':
+                try:
+                    mask = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii').get_fdata()
+                    focuses.append(focus)
+                except:
+                    print(f'{focus} not found')
+
+            if sub == 'sub-07':
+                try:
+                    mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_blockStim_layers_equidist.nii').get_fdata()
+                    focuses.append(focus)
+                except:
+                    print(f'{focus} not found')
+        print(f'found ROIs for: {focuses}')
+
+
+        for focus in focuses:
+            if not sub == 'sub-07':
+                mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii').get_fdata()
+
+            if sub == 'sub-07':
+                mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_blockStim_layers_equidist.nii').get_fdata()
+
+            for task in ['blockStimLongTR','blockStim','blockStimVisOnly']:
+
+                if not task == 'blockStimVisOnly':
+                    contrast = 'visiotactile'
+                else:
+                    contrast = 'visual'
+
+                blockRuns = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_*_task-{task}_run-00*_cbv.nii.gz'))
+
+                if len(blockRuns)==0:
+                    print(f'no runs found for {task}.')
+                    continue
+
+                for modality in ['BOLD','VASO']:
+
+                    if 'blockStim' in task:
+
+                        if sub == 'sub-05':
+                            data = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_{ses}_task-{task}_run-002_{modality}.feat/stats/zstat1_scaled.nii.gz').get_fdata()
+
+                        elif len(blockRuns) == 1:
+                            data = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_{ses}_task-{task}_run-001_{modality}.feat/stats/zstat1_scaled.nii.gz').get_fdata()
+
+                        else:
+                            data = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_{ses}_task-{task}_secondLevel_{modality}.gfeat/cope1.feat/stats/zstat1_scaled.nii.gz').get_fdata()
+
+                        for j in range(1,12):  # Compute bin averages
+                            layerRoi = mask == j
+                            mask_mean = np.mean(data[layerRoi.astype(bool)])
+
+                            subList.append(sub)
+                            dataList.append(mask_mean)
+                            modalityList.append(modality[:4])
+                            layerList.append(j)
+                            stimTypeList.append(task)
+                            contrastList.append(contrast)
+                            focusList.append(focus)
+                            runList.append('blockStim')
+import matplotlib.gridspec as gridspec
+
+zscores = pd.DataFrame({'subject': subList, 'data': dataList, 'modality': modalityList, 'layer':layerList, 'stimType':stimTypeList, 'contrast':contrastList,'focus':focusList, 'runType':runList})
+
+
+
+for sub in subs:
+    for focus, cmap in zip(['v1'],palettes):
+        sns.lineplot(data=blockData.loc[(blockData['subject']==sub)&(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = cmap)
+
+
+        plt.axvspan(4, 4+(30/tr), color='grey', alpha=0.2, lw=0, label = 'stimulation on')
+        plt.ylabel('% signal change', fontsize=24)
+        plt.xlabel('Time (s)', fontsize=24)
+        plt.title(f"{sub} Event-Related Average", fontsize=24, pad=20)
+        plt.legend(loc='lower center', fontsize=14)
+
+
+        values = (np.arange(-4,len(blockData['x'].unique())-4,4)*tr).round().astype(int)
+        spacing = np.arange(0,len(blockData['x'].unique()),4)
+
+        plt.xticks(spacing,values, fontsize=18)
+        plt.yticks(fontsize=18)
+        # plt.savefig(f'{root}/{sub}_{focus}_BlockResults.png', bbox_inches = "tight")
+        plt.show()
+
+for focus in ['v1']:
+    fig, (ax1,ax2) = plt.subplots(2,1,figsize=(7.5,10))
+
+
+    sns.lineplot(ax=ax1, data=blockData.loc[(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = v1Palette)
+
+
+    ax1.axvspan(4, 4+(30/tr), color='grey', alpha=0.2, lw=0, label = 'stimulation')
+    ax1.set_ylabel('signal change [%]', fontsize=24)
+    ax1.set_xlabel('Time [s]', fontsize=24)
+    ax1.legend(loc='lower center', fontsize=14)
+
+    values = (np.arange(-4,len(blockData['x'].unique())-4,4)*tr).round().astype(int)
+    spacing = np.arange(0,len(blockData['x'].unique()),4)
+    ax1.set_xticks(spacing,values, fontsize=18)
+
+    ax1.tick_params(axis='y', labelsize=18)
+    # ax1.legend().remove()
+
+
+
+    tmp = zscores.loc[(zscores['focus']==focus)&(zscores['stimType']== 'blockStim')]
+    sns.lineplot(ax=ax2, data=tmp, x='layer', y='data', hue='modality',palette=v1Palette)
+
+    ax2.set_ylabel(f'z-score', fontsize=24)
+    ax2.set_xticks([])
+
+    ax2.set_xlabel('WM                                                 CSF', fontsize=24)
+    ax2.tick_params(axis='y', labelsize=18)
+
+    ax2.legend().remove()
+
+    fig.tight_layout()
+
+
+    # lines = []
+    # labels = []
+    #
+    # for ax in fig.axes:
+    #     axLine, axLabel = ax.get_legend_handles_labels()
+    #     lines.extend(axLine)
+    #     labels.extend(axLabel)
+    #
+    #
+    # fig.legend(lines[:2], labels[:2],
+    #            loc = 'center right', fontsize=14)
+
+    plt.savefig(f'../results/group_{focus}_BlockResults.png', bbox_inches = "tight")
     plt.show()

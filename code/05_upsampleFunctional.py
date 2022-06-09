@@ -155,3 +155,33 @@ for sub in ['sub-11']:
                 zdim = dims[2]
 
                 subprocess.run(f'/home/sebastian/abin/3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_{focus}_{modality}.nii.gz -input {outFolder}/{base}_{focus}_{modality}.nii.gz',shell=True)
+
+
+## upsample QA
+
+for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
+    ses = 'ses-002'
+    dataFolder = f'{root}/derivatives/{sub}/{ses}'
+
+    runs = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_{ses}_task-*run-00*_cbv.nii.gz'))
+
+    for run in runs:
+        base = os.path.basename(run).rsplit('.', 2)[0][:-4]
+        print(f'Processing run {base}')
+
+        # Get dims
+        dataFile = f'{dataFolder}/{base}_T1w_N4Corrected.nii'
+        dataNii = nb.load(dataFile)
+        header = dataNii.header
+        data = dataNii.get_fdata()
+
+        dims = header.get_zooms()
+
+        xdim = dims[0]
+        ydim = dims[1]
+        zdim = dims[2]
+
+        for modality in ['VASO', 'BOLD']:
+            for measure in ['mean', 'tSNR', 'kurt', 'skew']:
+
+                subprocess.run(f'/home/sebastian/abin/3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {dataFolder}/{base}_{modality}_{measure}_scaled.nii.gz -input {dataFolder}/{base}_{modality}_{measure}.nii.gz',shell=True)

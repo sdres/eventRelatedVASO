@@ -166,6 +166,54 @@ for sub in ['sub-13']:
                                 line = line.replace(src, target)
                             outfile.write(line)
 
+# short vs long ITI
+subs = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
+subs = ['sub-09','sub-11']
+for sub in subs:
+# for sub in ['sub-06']:
+
+    ses='ses-002'
+    runs = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_{ses}_task-event*run-00*_cbv.nii.gz'))
+
+    outFolder = f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/ses-001'
+
+    for run in runs:
+        base = os.path.basename(run).rsplit('.', 2)[0][:-4]
+        print(f'Processing run {base}')
+        if 'Random' in base:
+            type='_Random'
+        else:
+            type=''
+
+        tr = findTR(f'{root}/derivatives/{sub}/{ses}/events/{base}.log')
+
+        for modality in ['BOLD', 'VASO']:
+        # for modality in ['VASO']:
+
+            actualData = f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{base}_{modality}.nii.gz'
+
+            runData = nb.load(actualData)
+            tr = str(runData.header.get_zooms()[-1])
+
+            runData = runData.get_fdata()
+            nrVolumes = str(runData.shape[-1])
+            print(nrVolumes)
+
+            for focus in ['v1']:
+
+                replacements = {'SUBID':f'{sub}', 'BASE':base, 'FOCUS':focus, 'NRVOLS': nrVolumes, 'SESID':ses, 'MODALITY':modality}
+
+
+
+                with open(f"{fsfDir}/templateDesign_FIR{type}_longVsShortITI.fsf") as infile:
+                    with open(f"{fsfDir}/{base}_{focus}_{modality}_FIR_longVsShortITI.fsf", 'w') as outfile:
+                        for line in infile:
+                            for src, target in replacements.items():
+                                line = line.replace(src, target)
+                            outfile.write(line)
+
+
+
 
 # for VESSEL FIR analysis
 for sub in ['sub-14']:
@@ -210,7 +258,7 @@ for sub in ['sub-14']:
 
 fsfDir
 
-fsfs = sorted(glob.glob(f'{fsfDir}/sub-13_ses-001_*v1*_FIR*'))
+fsfs = sorted(glob.glob(f'{fsfDir}/sub-09_ses-002_*v1*_FIR_longVsShortITI*'))
 
 
 for file in fsfs:

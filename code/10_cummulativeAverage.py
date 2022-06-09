@@ -166,10 +166,13 @@ for focus in ['v1']:
 
 
 
-np.save('../my_dict.npy',  eventResults)
-eventResults = np.load('../my_dict.npy',allow_pickle=True)
+np.save('../data/trialWiseResponses.npy',  eventResults)
 
+type(eventResults)
 
+eventResults2 = np.load('../data/trialWiseResponses.npy',allow_pickle=True).item()
+
+type(eventResults2)
 
 subList = []
 dataList = []
@@ -205,18 +208,18 @@ for focus, cmap in zip(['v1'],['tab10']):
                         for j in range(1, 4):
 
                             subTrials = []
-                            for key, value in eventResults[focus][sub][base][modality][trialType][f'layer {j}'].items():
+                            for key, value in eventResults2[focus][sub][base][modality][trialType][f'layer {j}'].items():
                                 subTrials.append(key)
 
                             for trial in subTrials[:-1]:
 
-                                for n in range(len(eventResults[focus][sub][base][modality][trialType][f'layer {j}'][trial][0])):
+                                for n in range(len(eventResults2[focus][sub][base][modality][trialType][f'layer {j}'][trial][0])):
 
                                     if modality == "BOLD":
-                                        dataList.append(eventResults[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+                                        dataList.append(eventResults2[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
 
                                     if modality == "VASO":
-                                        dataList.append(-eventResults[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+                                        dataList.append(-eventResults2[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
 
                                     modalityList.append(modality)
                                     trialList.append(trial)
@@ -232,18 +235,18 @@ for focus, cmap in zip(['v1'],['tab10']):
                     for j in range(1, 4):
 
                         subTrials = []
-                        for key, value in eventResults[focus][sub][base][modality][trialType][f'layer {j}'].items():
+                        for key, value in eventResults2[focus][sub][base][modality][trialType][f'layer {j}'].items():
                             subTrials.append(key)
 
                         for trial in subTrials[:-1]:
 
-                            for n in range(len(eventResults[focus][sub][base][modality][trialType][f'layer {j}'][trial][0])):
+                            for n in range(len(eventResults2[focus][sub][base][modality][trialType][f'layer {j}'][trial][0])):
 
                                 if modality == "BOLD":
-                                    dataList.append(eventResults[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+                                    dataList.append(eventResults2[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
 
                                 if modality == "VASO":
-                                    dataList.append(-eventResults[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+                                    dataList.append(-eventResults2[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
 
                                 modalityList.append(modality)
                                 trialList.append(trial)
@@ -507,3 +510,53 @@ for focus in ['v1']:
     plt.ylim(0,30)
     plt.savefig(f'../results/stabilizingPerEvent.png', bbox_inches = "tight")
     plt.show()
+
+# find 5% difference point
+
+#first for VASO in v1
+tmp = efficiencyData.loc[(efficiencyData['focus']=='v1')&(efficiencyData['modality']=='VASO')]
+
+firstTP = tmp['nrTrials'].unique()[0]
+firstTPVal = np.mean(tmp.loc[tmp['nrTrials']==firstTP]['score'])
+lastTP = tmp['nrTrials'].unique()[-1]
+lastTPVal = np.mean(tmp.loc[tmp['nrTrials']==lastTP]['score'])
+
+
+maxDiff = firstTPVal-lastTPVal
+percent = maxDiff/100
+thr = (percent*5)+lastTPVal
+thrLib = (percent*10)+lastTPVal
+critLib = 0
+for timePoint in tmp['nrTrials'].unique():
+    val = np.mean(tmp.loc[tmp['nrTrials']==timePoint]['score'])
+    if val <= thrLib:
+        if critLib == 0:
+            critLib = timePoint
+            print(f'liberal critereon reached after trial {timePoint}')
+
+
+    if val <= thr:
+        print(f'critereon reached after trial {timePoint}')
+        break
+
+
+for focus in ['v1']:
+    data = efficiencyData.loc[(efficiencyData['focus']==focus)]
+    # data = efficiencyData.loc[(efficiencyData['focus']==focus)&(efficiencyData['subject']==sub)]
+
+    sns.lineplot(data=data, x='nrTrials', y='score', hue='modality', palette= v1Palette)
+
+    plt.title('eventStim Response Stabilization', fontsize=24, pad=20)
+#     plt.ylabel(f"sum of squares", fontsize=24)
+    plt.ylabel(f"error", fontsize=24)
+    plt.xlabel('averaged trials', fontsize=24)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylim(0,30)
+    plt.vlines(critLib, ymin=0,ymax=30, label='10% error', linestyle='dashed',color='red')
+
+    plt.vlines(timePoint, ymin=0,ymax=30, label='5% error', linestyle='dashed',color='black')
+    plt.legend(loc='upper right', fontsize=20)
+    plt.savefig(f'../results/stabilizingPerEventWithCrit.png', bbox_inches = "tight")
+    plt.show()
+    

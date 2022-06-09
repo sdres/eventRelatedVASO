@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.interpolate import interp1d
 import os
+from matplotlib.ticker import FormatStrFormatter
 
 subs = ['sub-12']
 ses = 'ses-001'
@@ -292,7 +293,9 @@ for run in layerEventData['run'].unique():
 
 
 
-
+############################
+########### FIR ############
+############################
 
 
 layers = {'1':'deep','2':'middle','3':'superficial'}
@@ -304,8 +307,9 @@ layerList = []
 timepointList = []
 dataList = []
 focusList = []
+
 for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-13', 'sub-14']:
-# for sub in ['sub-13']:
+# for sub in ['sub-05']:
     runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*_run-00*_cbv.nii.gz'))
     for focus in ['v1', 's1']:
         for run in runs:
@@ -386,8 +390,8 @@ v1Palette = {
     'BOLD': 'tab:orange',
     'VASO': 'tab:blue'}
 s1Palette = {
-    'BOLD': 'tab:green',
-    'VASO': 'tab:blue'}
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:green'}
 
 palettes = [v1Palette,s1Palette]
 
@@ -397,8 +401,9 @@ for focus, cmap in zip(['v1','s1'],palettes):
     fig, ax  = plt.subplots()
     sns.lineplot(data=FIRdata.loc[FIRdata['focus']==focus], x="volume", y="data", hue='modality',palette=cmap)
     plt.title('Group Finite Impulse Response', fontsize=24, pad=20)
-    plt.ylabel(r'mean $\beta $', fontsize=24)
+    plt.ylabel(r'% signal change', fontsize=24)
     yLimits = ax.get_ylim()
+
     plt.ylim(0,yLimits[1])
     plt.yticks(range(-1,int(yLimits[1])+1),fontsize=16)
 
@@ -518,9 +523,6 @@ for focus, cmap in zip(['v1'],palettes):
 
 
 
-
-from matplotlib.ticker import FormatStrFormatter
-
 for focus, cmap in zip(['v1'],['Dark2']):
 
     g = sns.FacetGrid(FIRdata.loc[FIRdata['focus']==focus], col="modality", hue="layer", sharey=False, height= 5, aspect = 1.5,palette='rocket')
@@ -567,12 +569,25 @@ for focus, cmap in zip(['v1'],['Dark2']):
 
 
 
-    g.savefig(f"{root}/eventResults{focus}LayersModalityVsLayers.png")
+    # g.savefig(f"{root}/eventResults{focus}LayersModalityVsLayers.png")
 
+
+palette2 = {
+    'superficial': '#1F77B4',
+    'middle': '#726DBA',
+    'deep': '#C65293'}
+
+palette1 = {
+    'superficial': '#FF7F0E',
+    'middle': '#AA3900',
+    'deep': '#5F0000'}
+
+palettes = [palette1,palette2]
 
 fig, axes = plt.subplots(1,2, figsize=(15,5))
-for i, modality in enumerate(['BOLD','VASO']):
-    sns.lineplot(ax = axes[i], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']==modality)], x="volume", y="data", hue='layer', palette='rocket')
+
+for i, (modality,palette) in enumerate(zip(['BOLD','VASO'],palettes)):
+    sns.lineplot(ax = axes[i], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']==modality)], x="volume", y="data", hue='layer', palette=palette)
 
     axes[i].set_xlabel('Time (s)', fontsize=24)
 
@@ -583,7 +598,7 @@ for i, modality in enumerate(['BOLD','VASO']):
     ticks = range(0,11)
     labels = (np.arange(0,11)*1.3).round(decimals=1)
     axes[i].set_xticks(ticks)
-    axes[i].set_xticklabels(labels,fontsize=24)
+    axes[i].set_xticklabels(labels,fontsize=24,rotation=45)
 
     plt.setp(axes[i].get_yticklabels(), fontsize=24)
     axes[i].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
@@ -591,8 +606,377 @@ for i, modality in enumerate(['BOLD','VASO']):
 
 plt.rcParams['legend.title_fontsize'] = 20
 axes[0].legend().remove()
-axes[0].set_ylabel(r'mean $\beta $', fontsize=24)
+axes[0].set_ylabel(r'% signal change', fontsize=24)
 axes[1].set_ylabel('', fontsize=24)
 plt.tight_layout()
-plt.savefig('new_layers.png')
+plt.savefig('../results/new_layers.png')
 plt.show()
+
+
+
+
+#############################################
+########### FIR long vs shortITI ############
+#############################################
+
+
+layers = {'1':'deep','2':'middle','3':'superficial'}
+
+subList = []
+runList = []
+modalityList = []
+layerList = []
+timepointList = []
+dataList = []
+focusList = []
+longShortList = []
+
+# for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-13', 'sub-14']:
+for sub in ['sub-05','sub-06', 'sub-07','sub-08','sub-09']:
+    runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*_run-00*_cbv.nii.gz'))
+    # for focus in ['v1', 's1']:
+    for focus in ['v1']:
+        for run in runs:
+
+            base = os.path.basename(run).rsplit('.', 2)[0][:-4]
+            print(base)
+            if 'ses-001' in base:
+                ses = 'ses-001'
+            else:
+                ses= 'ses-002'
+
+            if sub == 'sub-09' and '4' in run:
+                print('skipping')
+                continue
+            for modality in ['BOLD', 'VASO']:
+                for type in ['longITI', 'shortITI']:
+
+
+                    for timepoint in range(1,11):
+                        if type == 'longITI':
+                            pe = timepoint
+                        if type == 'shortITI':
+                            pe = timepoint+10
+
+                        try:
+                            dataFile = f'{root}/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_layers_FIR_longVsShortITI.feat/stats/pe{pe}.nii.gz'
+                            dataNii = nb.load(dataFile)
+                            data = dataNii.get_fdata()
+                        except:
+                            print(f'data missing')
+                            continue
+
+                        for layer in layers.keys():
+                            subList.append(sub)
+                            runList.append(base)
+                            modalityList.append(modality)
+                            layerList.append(layers[layer])
+                            timepointList.append(timepoint)
+                            focusList.append(focus)
+                            longShortList.append(type)
+                            if modality =='BOLD':
+                                dataList.append(data[int(layer)-1])
+                            if modality =='VASO':
+                                dataList.append(-data[int(layer)-1])
+
+
+
+FIRdata = pd.DataFrame({'subject':subList, 'run':runList, 'layer':layerList, 'modality':modalityList, 'data':dataList, 'volume':timepointList, 'focus':focusList, 'ITI':longShortList})
+
+
+
+
+fig, axes = plt.subplots(2,2, figsize=(15,10))
+for j, type in enumerate(['longITI', 'shortITI']):
+    for i, modality in enumerate(['BOLD','VASO']):
+        sns.lineplot(ax = axes[j,i], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']==modality)&(FIRdata['ITI']==type)], x="volume", y="data", hue='layer', palette='rocket')
+
+        axes[j,i].set_xlabel('Time (s)', fontsize=24)
+
+
+        axes[j,i].set_title(modality, fontsize=24, pad=20)
+        axes[j,i].axvspan(0, 2/1.3, color='grey', alpha=0.2, lw=0, label = 'stimulation on')
+
+        ticks = range(0,11)
+        labels = (np.arange(0,11)*1.3).round(decimals=1)
+        axes[j,i].set_xticks(ticks)
+        axes[j,i].set_xticklabels(labels,fontsize=24,rotation=45)
+
+        plt.setp(axes[j,i].get_yticklabels(), fontsize=24)
+        axes[j,i].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        axes[j,i].axhline(0,linestyle='--',color='black')
+
+    plt.rcParams['legend.title_fontsize'] = 20
+    axes[j,0].legend().remove()
+    axes[j,0].set_ylabel(r'% signal change', fontsize=24)
+    axes[j,1].set_ylabel('', fontsize=24)
+
+plt.tight_layout()
+# plt.savefig('../results/new_layers.png')
+plt.show()
+
+
+
+fig, axes = plt.subplots(3,1, figsize=(8,15))
+for j, layer in enumerate(['superficial', 'middle','deep']):
+    sns.lineplot(ax = axes[j], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='VASO')&(FIRdata['layer']==layer)], x="volume", y="data", hue='ITI', palette='rocket')
+
+    axes[j].set_xlabel('Time (s)', fontsize=24)
+
+
+    axes[j].set_title(layer, fontsize=24, pad=20)
+    axes[j].axvspan(0, 2/1.3, color='grey', alpha=0.2, lw=0, label = 'stimulation on')
+
+    ticks = range(0,11)
+    labels = (np.arange(0,11)*1.3).round(decimals=1)
+    axes[j].set_xticks(ticks)
+    axes[j].set_xticklabels(labels,fontsize=24,rotation=45)
+
+    plt.setp(axes[j].get_yticklabels(), fontsize=24)
+    axes[j].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    axes[j].axhline(0,linestyle='--',color='black')
+
+    plt.rcParams['legend.title_fontsize'] = 20
+axes[1].set_ylabel(r'VASO % signal change', fontsize=24)
+axes[0].set_ylabel('', fontsize=24)
+axes[2].set_ylabel('', fontsize=24)
+
+plt.tight_layout()
+plt.savefig('../results/shortVsLongITI_allLayers.png')
+plt.show()
+
+fig, axes = plt.subplots(1,1, figsize=(8,15))
+for j, layer in enumerate(['superficial']):
+    sns.lineplot(ax = axes[j], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='VASO')&(FIRdata['layer']==layer)], x="volume", y="data", hue='ITI', palette='rocket')
+
+    axes[j].set_xlabel('Time (s)', fontsize=24)
+
+
+    axes[j].set_title(layer, fontsize=24, pad=20)
+    axes[j].axvspan(0, 2/1.3, color='grey', alpha=0.2, lw=0, label = 'stimulation on')
+
+    ticks = range(0,11)
+    labels = (np.arange(0,11)*1.3).round(decimals=1)
+    axes[j].set_xticks(ticks)
+    axes[j].set_xticklabels(labels,fontsize=24,rotation=45)
+
+    plt.setp(axes[j].get_yticklabels(), fontsize=24)
+    axes[j].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    axes[j].axhline(0,linestyle='--',color='black')
+
+    plt.rcParams['legend.title_fontsize'] = 20
+    axes[0].set_ylabel(r'VASO % signal change', fontsize=24)
+
+
+plt.tight_layout()
+plt.savefig('../results/shortVsLongITI_superficial.png')
+plt.show()
+
+
+
+v1Palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:blue'}
+s1Palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:green'}
+
+palettes = [v1Palette,s1Palette]
+
+### BLACK BG
+
+plt.style.use('dark_background')
+plt.rcParams["font.family"] = "Times New Roman"
+for focus, cmap in zip(['v1','s1'],palettes):
+
+
+    fig, ax  = plt.subplots()
+    sns.lineplot(data=FIRdata.loc[FIRdata['focus']==focus], x="volume", y="data", hue='modality',palette=cmap)
+    plt.title('Group Finite Impulse Response', fontsize=24, pad=20)
+    plt.ylabel(r'% signal change', fontsize=24)
+    yLimits = ax.get_ylim()
+
+    plt.ylim(0,yLimits[1])
+    plt.yticks(range(-1,int(yLimits[1])+1),fontsize=16)
+
+    ticks = range(0,11)
+    labels = (np.arange(0,11)*1.3).round(decimals=1)
+
+    plt.xticks(ticks, labels, fontsize=16, rotation=45)
+    plt.xlabel('Time (s)', fontsize=24)
+
+    plt.axvspan(0, 2/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
+    plt.legend(loc='upper right', fontsize=13)
+    plt.savefig(f'{root}/Group_{focus}_FIR.png', bbox_inches = "tight")
+
+    plt.show()
+
+
+## reduce input
+v1Palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:blue'}
+s1Palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:green'}
+
+palettes = [v1Palette,s1Palette]
+
+fig, axes = plt.subplots(3,2, figsize=(10,15))
+
+# for j, layer in enumerate(['superficial','middle','deep']):
+for i, (modality,palette) in enumerate(zip(['BOLD','VASO'],['tab:orange','tab:blue'])):
+    axes[0,i].set_title(modality, fontsize=24, pad=20)
+
+    for j, layer in enumerate(['superficial','middle','deep']):
+
+        sns.lineplot(ax = axes[j,i], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']==modality)&(FIRdata['layer']==layer)], x="volume", y="data", color=palette, linewidth=2)
+
+        vasoLim = [-1.5, 9]
+        boldLim = [-1.5,9]
+
+        if modality == 'VASO':
+            axes[j,i].set_ylim(vasoLim[0],vasoLim[1])
+        if modality == 'BOLD':
+            axes[j,i].set_ylim(boldLim[0],boldLim[1])
+        axes[j,i].axhline(0,linestyle='--',color='white')
+        axes[j,i].axvline(4,linestyle='--',color='white')
+
+        axes[j,i].set_xlabel('Time [s]', fontsize=24)
+
+        axes[j,i].axvspan(0, 2/1.3, color='white', alpha=0.2, lw=0, label = 'stimulation')
+        #
+        ticks = range(0,11)
+        labels = (np.arange(0,11)*1.3).round(decimals=1)
+        for k,label in enumerate(labels):
+            if (label - int(label) == 0):
+                labels[k] = int(label)
+
+        ## reduce input
+
+        axes[j,i].set_xticks(ticks[::2])
+        axes[j,i].set_xticklabels(labels[::2],fontsize=20)
+
+
+for j in range(3):
+    axes[j,1].set_ylabel('', fontsize=24)
+    axes[j,0].set_ylabel('', fontsize=24)
+
+
+    ax2 = axes[j,1].twinx()
+    ax2.set_ylabel(['superficial','middle','deep'][j], fontsize=24)
+    ax2.set_yticks([])
+    axes[j,1].set_yticks([])
+
+
+    plt.setp(axes[j,0].get_yticklabels(), fontsize=20)
+    axes[j,0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    plt.setp(axes[j,1].get_yticklabels(), fontsize=20)
+    axes[j,1].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+
+# show ylabel for middle row only
+axes[1,0].set_ylabel('% signal change', fontsize=24)
+
+# remove x ticks and labels except for lowest row
+for j in range(2):
+    axes[j,0].set_xlabel('', fontsize=24)
+    axes[j,1].set_xlabel('', fontsize=24)
+    axes[j,0].set_xticks([])
+    axes[j,0].set_xticklabels([],fontsize=24,rotation=45)
+    axes[j,1].set_xticks([])
+    axes[j,1].set_xticklabels([],fontsize=24,rotation=45)
+
+axes[-1,-1].legend(fontsize=14)
+plt.tight_layout()
+plt.savefig('../results/layersInPanels.png')
+plt.show()
+\
+
+
+
+
+
+# Normalize response peak
+
+FIRdata
+tmpVASO = FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='VASO')]
+# find peak
+maxtp=0
+maxval = 0
+for timepoint in tmpVASO['volume'].unique():
+    tmp = np.mean(tmpVASO['data'].loc[tmpVASO['volume']==timepoint])
+    if tmp > maxval:
+        maxtp=timepoint
+        maxval = tmp
+
+tmpVASO['data'] = tmpVASO['data']/np.mean(tmpVASO['data'].loc[tmpVASO['volume']==maxtp])
+
+
+
+tmpBOLD = FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='BOLD')]
+# find peak
+maxtp=0
+maxval = 0
+for timepoint in tmpBOLD['volume'].unique():
+    tmp = np.mean(tmpBOLD['data'].loc[tmpBOLD['volume']==timepoint])
+    if tmp > maxval:
+        maxtp=timepoint
+        maxval = tmp
+
+tmpBOLD['data'] = tmpBOLD['data']/np.mean(tmpBOLD['data'].loc[tmpBOLD['volume']==maxtp])
+
+
+
+tmpBOLD = FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='BOLD')]
+tmpBOLD['data'] = tmpBOLD['data']/np.amax(tmpBOLD['data'])
+
+tmp = tmpVASO.append(tmpBOLD)
+
+
+
+fig, ax  = plt.subplots()
+sns.lineplot(data=tmpVASO, x="volume", y="data",label='VASO')
+sns.lineplot(data=tmpBOLD, x="volume", y="data",label='BOLD')
+plt.legend()
+plt.show()
+
+
+
+
+v1Palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:blue'}
+s1Palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:green'}
+
+palettes = [v1Palette,s1Palette]
+
+for focus in ['v1']:
+
+
+    fig, ax  = plt.subplots()
+    sns.lineplot(data=tmp.loc[tmp['focus']==focus], x="volume", y="data", hue='modality',palette=v1Palette)
+    plt.title('Group Finite Impulse Response', fontsize=24, pad=20)
+    plt.ylabel(r'% signal change', fontsize=24)
+
+
+    yLimits = ax.get_ylim()
+
+    plt.ylim(-0.2,yLimits[1])
+    plt.yticks(np.linspace(-0.2,1.2,8).round(decimals=2),fontsize=16)
+
+    # ax.tick_params(axis='y', labelsize= 16)
+
+    ticks = range(0,11)
+    labels = (np.arange(0,11)*1.3).round(decimals=1)
+
+    plt.xticks(ticks, labels, fontsize=16, rotation=45)
+    plt.xlabel('Time (s)', fontsize=24)
+
+    plt.axvspan(0, 2/1.3, color='grey', alpha=0.2, lw=0, label = 'stimulation on')
+    plt.legend(loc='upper right', fontsize=13)
+    plt.savefig(f'{root}/Group_{focus}_FIR_norm.png', bbox_inches = "tight")
+
+    plt.show()
