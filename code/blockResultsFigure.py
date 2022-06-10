@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import os
 
 subs = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
-subs = ['sub-05']
+# subs = ['sub-05']
 
 
 root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
@@ -82,6 +82,7 @@ for focus in ['v1']:
                     data = Nii.get_fdata()[:,:,:,:-2]
                     # load the nifty-header to get some meta-data.
                     header = Nii.header
+                    nrVols = data.shape[-1]
 
                     # As the number of volumes which is the 4th position of
                     # get_shape. This seems to be unused so I will comment it out to check.
@@ -95,8 +96,33 @@ for focus in ['v1']:
 
                     events = pd.read_csv(f'{root}/derivatives/{sub}/{ses}/events/{base}.txt', sep = ' ', names = ['start','duration','trialType'])
 
+
                     # Load information on run-wise motion
                     FDs = pd.read_csv(f'{root}/derivatives/{sub}/{ses}/motionParameters/{base}_FDs.csv')
+                    # compute baseline with non-stimulated periods
+                    bl = []
+                    restOnset = 0
+
+                    for i, row in events.iterrows():
+                        trialOnset = round(row['start'])
+
+                        # print(f'rest start: {restOnset}')
+                        # print(f"rest end: {trialOnset}")
+
+
+                        bl.append(data[:, :, :, int(round(restOnset/tr)):int(round(trialOnset/tr))][mask.astype(bool)])
+
+                        restOnset = trialOnset+row['duration']
+
+                    if int(round(restOnset/tr))<nrVols:
+                        bl.append(data[:, :, :, int(round(restOnset/tr)):int(round(nrVols))][mask.astype(bool)])
+
+
+                    means = []
+                    for arr in bl:
+                        means.append(np.mean(arr))
+                    mean = sum(means) / len(means)
+
 
                     for i, row in events.iterrows():
 
@@ -118,7 +144,7 @@ for focus in ['v1']:
                         tmp = FDs.loc[(FDs['volume']>=(onset-2)/2)&(FDs['volume']<=(offset+2)/2)]
 
                         if not (tmp['FD']>=2).any():
-                            blockResults[focus][sub][base][modality][f'trial {i}'] = np.mean((((data[:, :, :, int(onset-4):int(offset+ 8)][mask.astype(bool)]) / mask_mean)- 1) * 100,axis=0)
+                            blockResults[focus][sub][base][modality][f'trial {i}'] = np.mean((((data[:, :, :, int(onset-4):int(offset+ 8)][mask.astype(bool)]) / mean)- 1) * 100,axis=0)
 
 
 subList = []
@@ -354,9 +380,11 @@ for focus in ['v1']:
     ax2.tick_params(axis='y', labelsize=18)
 
     ax2.legend().remove()
+    ax1.legend().remove()
 
     fig.tight_layout()
 
+    ax1.axhline(0,linestyle='--',color='white')
 
     # lines = []
     # labels = []

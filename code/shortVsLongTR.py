@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from pingouin import mwu
 
+root = f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
 
 # compare tSNR for long vs short TR
 subs = ['sub-09','sub-11']
@@ -282,4 +283,41 @@ plt.savefig(f'../results/profiles_longVsShort.jpg',bbox_inches='tight')
 
 
 
-                 
+palette = {
+    'blockStimLongTR': '#8DD3C7',
+    'blockStim': '#FFFFB3'}
+
+# Plotting everything together
+fig, axs = plt.subplots(2,2, figsize=(10,10))
+
+for i, modality in enumerate(['BOLD','VASO']):
+    sns.kdeplot(ax=axs[i,0],data=tSNRdata.loc[tSNRdata['modality']==modality],x='tSNR',hue='TRlength',linewidth=2, palette=palette)
+    axs[i,0].set_yticks([])
+    axs[i,0].set_ylabel('voxel count',fontsize=20)
+    axs[i,0].set_xlim(0,45)
+    axs[i,0].legend().remove()
+# adapt x-axis
+axs[0,0].set_xticks([])
+axs[0,0].set_xlabel('')
+axs[1,0].set_xlabel('tSNR',fontsize=20)
+axs[1,0].tick_params(axis='x', labelsize=18)
+axs[1,0].set_xticks(range(0,46,5))
+
+
+for i, modality in enumerate(['BOLD','VASO']):
+    sns.lineplot(ax=axs[i,1],data=zscores.loc[zscores['modality']==modality],x='layer',y='data',hue='stimType',linewidth=2, palette=palette)
+    axs[i,1].set_xticks([])
+    axs[i,1].set_ylabel('z-score',fontsize=20)
+    axs[i,1].tick_params(axis='y', labelsize=18)
+    axs[i,1].legend().remove()
+
+axs[0,1].set_yticks(range(0,13,2))
+axs[1,1].set_yticks(range(0,7,2))
+
+
+# adapt x-axis
+axs[0,1].set_xlabel('')
+axs[1,1].set_xlabel('WM                                     CSF',fontsize=20)
+plt.tight_layout()
+plt.savefig(f'../results/v1longVsShort.jpg',bbox_inches='tight')
+plt.show()
