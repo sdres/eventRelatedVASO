@@ -83,6 +83,8 @@ for focus in ['v1']:
                     # load the nifty-header to get some meta-data.
                     header = Nii.header
 
+                    nrVols = data.shape[-1]
+
                     # As the number of volumes which is the 4th position of
                     # get_shape. This seems to be unused so I will comment it out to check.
                     # nr_volumes = int(header.get_data_shape()[3])
@@ -98,6 +100,33 @@ for focus in ['v1']:
                     # Load information on run-wise motion
                     FDs = pd.read_csv(f'{root}/derivatives/{sub}/{ses}/motionParameters/{base}_FDs.csv')
 
+                    # compute baseline with non-stimulated periods
+                    bl = []
+                    restOnset = 0
+
+                    for i, row in events.iterrows():
+                        trialOnset = round(row['start'])
+
+                        # print(f'rest start: {restOnset}')
+                        # print(f"rest end: {trialOnset}")
+
+
+                        bl.append(data[:, :, :, int(round(restOnset/tr)):int(round(trialOnset/tr))][mask.astype(bool)])
+
+                        restOnset = trialOnset+row['duration']
+
+                    if int(round(restOnset/tr))<nrVols:
+                        bl.append(data[:, :, :, int(round(restOnset/tr)):int(round(nrVols))][mask.astype(bool)])
+
+
+                    means = []
+                    for arr in bl:
+                        means.append(np.mean(arr))
+                    mean = sum(means) / len(means)
+
+
+
+
                     for i, row in events.iterrows():
 
                         onset = round(row['start']/tr)
@@ -111,14 +140,14 @@ for focus in ['v1']:
                         # Because we want the % signal-change, we need the mean
                         # of the voxel we are looking at. This is done with
                         # some fancy matrix operations.
-                        mask_mean = np.mean(data[:, :, :]
-                                            [mask.astype(bool)])
+                        # mask_mean = np.mean(data[:, :, :]
+                        #                     [mask.astype(bool)])
 
                         # truncate motion data to event
                         tmp = FDs.loc[(FDs['volume']>=(onset-2)/2)&(FDs['volume']<=(offset+2)/2)]
 
                         if not (tmp['FD']>=2).any():
-                            blockResults[focus][sub][base][modality][f'trial {i}'] = np.mean((((data[:, :, :, int(onset-4):int(offset+ 8)][mask.astype(bool)]) / mask_mean)- 1) * 100,axis=0)
+                            blockResults[focus][sub][base][modality][f'trial {i}'] = np.mean((((data[:, :, :, int(onset-4):int(offset+ 8)][mask.astype(bool)]) / mean)- 1) * 100,axis=0)
 
 
 subList = []
@@ -210,11 +239,14 @@ for focus in ['v1','s1']:
     plt.ylabel('signal change [%]', fontsize=24)
     plt.xlabel('Time [s]', fontsize=24)
     # plt.title(f"Group Response Timecourse", fontsize=24, pad=20)
-    plt.legend(loc='lower center', fontsize=14)
+    # plt.legend(loc='lower center', fontsize=14)
+    plt.legend().remove()
 
 
     values = (np.arange(-4,len(blockData['x'].unique())-4,4)*tr).round().astype(int)
     spacing = np.arange(0,len(blockData['x'].unique()),4)
+
+    # ax.axhline(0,linestyle='--',color='white',alpha=0.5)
 
     plt.xticks(spacing,values, fontsize=18)
     plt.yticks(fontsize=18)

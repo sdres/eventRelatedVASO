@@ -792,22 +792,36 @@ for focus, cmap in zip(['v1','s1'],palettes):
 
     fig, ax  = plt.subplots()
     sns.lineplot(data=FIRdata.loc[FIRdata['focus']==focus], x="volume", y="data", hue='modality',palette=cmap)
-    plt.title('Group Finite Impulse Response', fontsize=24, pad=20)
-    plt.ylabel(r'% signal change', fontsize=24)
+    plt.title('', fontsize=24, pad=20)
+    plt.ylabel(r'signal change [%]', fontsize=24)
     yLimits = ax.get_ylim()
 
     plt.ylim(0,yLimits[1])
     plt.yticks(range(-1,int(yLimits[1])+1),fontsize=16)
 
+    # ticks = range(0,11)
+    # labels = (np.arange(0,11)*1.3).round(decimals=1)
     ticks = range(0,11)
     labels = (np.arange(0,11)*1.3).round(decimals=1)
+    for k,label in enumerate(labels):
+        if (label - int(label) == 0):
+            labels[k] = int(label)
 
-    plt.xticks(ticks, labels, fontsize=16, rotation=45)
-    plt.xlabel('Time (s)', fontsize=24)
+    ## reduce input
+
+
+    # plt.xticks(ticks, labels, fontsize=16, rotation=45)
+    ax.set_xticks(ticks[::2])
+    ax.set_xticklabels(labels[::2],fontsize=16)
+
+
+    plt.xlabel('Time [s]', fontsize=24)
 
     plt.axvspan(0, 2/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
-    plt.legend(loc='upper right', fontsize=13)
-    plt.savefig(f'{root}/Group_{focus}_FIR.png', bbox_inches = "tight")
+    ax.axhline(0,linestyle='--',color='white')
+
+    plt.legend(loc='upper right', fontsize=13).remove()
+    plt.savefig(f'../results/Group_{focus}_FIR_manuscript.png', bbox_inches = "tight")
 
     plt.show()
 
@@ -876,7 +890,7 @@ for j in range(3):
 
 
 # show ylabel for middle row only
-axes[1,0].set_ylabel('% signal change', fontsize=24)
+axes[1,0].set_ylabel('signal change [%]', fontsize=24)
 
 # remove x ticks and labels except for lowest row
 for j in range(2):
@@ -891,7 +905,7 @@ axes[-1,-1].legend(fontsize=14)
 plt.tight_layout()
 plt.savefig('../results/layersInPanels.png')
 plt.show()
-\
+
 
 
 
