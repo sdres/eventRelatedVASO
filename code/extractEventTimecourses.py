@@ -365,6 +365,9 @@ for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','s
 FIRdata = pd.DataFrame({'subject':subList, 'run':runList, 'layer':layerList, 'modality':modalityList, 'data':dataList, 'volume':timepointList, 'focus':focusList})
 
 
+FIRdata.to_csv('../results/FIR_results.csv',index=False)
+FIRdata = pd.read_csv('../results/FIR_results.csv')
+
 # for sub in ['sub-06', 'sub-07','sub-08', 'sub-09', 'sub-13', 'sub-14']:
 for sub in ['sub-12']:
     fig, axes = plt.subplots(1,2)
@@ -914,6 +917,7 @@ plt.show()
 # Normalize response peak
 
 FIRdata
+
 tmpVASO = FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='VASO')]
 # find peak
 maxtp=0
@@ -924,7 +928,9 @@ for timepoint in tmpVASO['volume'].unique():
         maxtp=timepoint
         maxval = tmp
 
-tmpVASO['data'] = tmpVASO['data']/np.mean(tmpVASO['data'].loc[tmpVASO['volume']==maxtp])
+
+
+tmpVASO['dataNorm'] = np.array(tmpVASO['data'])/np.mean(tmpVASO['data'].loc[tmpVASO['volume']==maxtp])
 
 
 
@@ -938,26 +944,26 @@ for timepoint in tmpBOLD['volume'].unique():
         maxtp=timepoint
         maxval = tmp
 
-tmpBOLD['data'] = tmpBOLD['data']/np.mean(tmpBOLD['data'].loc[tmpBOLD['volume']==maxtp])
+tmpBOLD['dataNorm'] = tmpBOLD['data']/np.mean(tmpBOLD['data'].loc[tmpBOLD['volume']==maxtp])
 
 
 
-tmpBOLD = FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='BOLD')]
-tmpBOLD['data'] = tmpBOLD['data']/np.amax(tmpBOLD['data'])
+# tmpBOLD = FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']=='BOLD')]
+# tmpBOLD['data'] = tmpBOLD['data']/np.amax(tmpBOLD['data'])
 
 tmp = tmpVASO.append(tmpBOLD)
 
 
 
 fig, ax  = plt.subplots()
-sns.lineplot(data=tmpVASO, x="volume", y="data",label='VASO')
-sns.lineplot(data=tmpBOLD, x="volume", y="data",label='BOLD')
+sns.lineplot(data=tmpVASO, x="volume", y="dataNorm",label='VASO')
+sns.lineplot(data=tmpBOLD, x="volume", y="dataNorm",label='BOLD')
 plt.legend()
 plt.show()
 
 
 
-
+tmp['volume']=tmp['volume']-1
 v1Palette = {
     'BOLD': 'tab:orange',
     'VASO': 'tab:blue'}
@@ -965,13 +971,15 @@ s1Palette = {
     'BOLD': 'tab:orange',
     'VASO': 'tab:green'}
 
+
 palettes = [v1Palette,s1Palette]
+
 
 for focus in ['v1']:
 
 
     fig, ax  = plt.subplots()
-    sns.lineplot(data=tmp.loc[tmp['focus']==focus], x="volume", y="data", hue='modality',palette=v1Palette)
+    sns.lineplot(data=tmp.loc[tmp['focus']==focus], x="volume", y="dataNorm", hue='modality',palette=v1Palette)
     plt.title('Group Finite Impulse Response', fontsize=24, pad=20)
     plt.ylabel(r'% signal change', fontsize=24)
 
