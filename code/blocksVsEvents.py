@@ -18,7 +18,6 @@ contrastList = []
 runList = []
 
 root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
-decoRoot = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/deconvolutionAnalysis'
 
 
 
@@ -315,7 +314,6 @@ for sub in ['sub-14','sub-08']:
 
 
 
-zscores['stimType'].unique()
 
 
 plt.style.use('dark_background')
@@ -357,3 +355,120 @@ for focus, cmap in zip(['s1', 'v1'],['Dark2', 'tab10']):
 
     plt.savefig(f'../results/Group_{focus}_blockStim_zScoreProfile.png', bbox_inches = "tight")
     plt.show()
+
+
+
+
+# Extract data from runs individually
+
+subList = []
+dataList = []
+modalityList = []
+layerList = []
+stimTypeList = []
+focusList = []
+contrastList = []
+runList = []
+
+# for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
+for sub in ['sub-05']:
+    allRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
+    print(sub)
+
+    # blockRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-block*run-00*_cbv.nii.gz'))
+
+    # see whether there are multiple sessions
+    sessions = []
+    for run in allRuns:
+        if 'ses-001' in run:
+            sessions.append('ses-001')
+        if 'ses-002' in run:
+            sessions.append('ses-002')
+    sessions = set(sessions)
+
+    for ses in sessions:
+        sesRuns = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
+
+        print(f'{ses}')
+        focuses = []
+        for focus in ['v1', 's1']:
+
+            if not sub == 'sub-07':
+                try:
+                    mask = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii').get_fdata()
+                    focuses.append(focus)
+                except:
+                    print(f'{focus} not found')
+
+            if sub == 'sub-07':
+                try:
+                    mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_eventStim_layers_equidist.nii').get_fdata()
+                    focuses.append(focus)
+                except:
+                    print(f'{focus} not found')
+
+        print(f'found ROIs for: {focuses}')
+
+
+
+        for focus in focuses:
+
+            if not sub == 'sub-07':
+                mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii').get_fdata()
+
+            if sub == 'sub-07':
+                mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_eventStim_layers_equidist.nii').get_fdata()
+
+
+
+            for run in sesRuns:
+                
+
+
+            for task in ['eventStimRandom', 'eventStim', 'eventStimVisOnly']:
+
+                eventRuns = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_*_task-{task}_run-00*_cbv.nii.gz'))
+
+                if len(eventRuns)==0:
+                    print(f'no runs found for {task}.')
+                    continue
+
+                for modality in ['BOLD','VASO']:
+
+
+                    if task == 'eventStim':
+                        data = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_{ses}_task-{task}_secondLevel_{modality}.gfeat/cope1.feat/stats/zstat1_scaled.nii.gz').get_fdata()
+
+                        for j in range(1,12):  # Compute bin averages
+                            layerRoi = mask == j
+                            mask_mean = np.mean(data[layerRoi.astype(bool)])
+
+                            subList.append(sub)
+                            dataList.append(mask_mean)
+                            modalityList.append(modality[:4])
+                            layerList.append(j)
+                            stimTypeList.append(task)
+                            contrastList.append('visiotactile')
+                            focusList.append(focus)
+                            runList.append('eventStim')
+
+                    elif task == 'eventStimRandom':
+                        for i, contrast in enumerate(['visual', 'visiotactile', 'visual&visiotactile', 'visiotactile > visual'], start = 1):
+                            data = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_{ses}_task-{task}_secondLevel_{modality}.gfeat/cope{i}.feat/stats/zstat1_scaled.nii.gz').get_fdata()
+
+                            for j in range(1,12):  # Compute bin averages
+                                layerRoi = mask == j
+                                mask_mean = np.mean(data[layerRoi.astype(bool)])
+
+                                subList.append(sub)
+                                dataList.append(mask_mean)
+                                modalityList.append(modality[:4])
+                                layerList.append(j)
+                                stimTypeList.append(task)
+                                contrastList.append(contrast)
+                                focusList.append(focus)
+                                runList.append('eventStim')
+
+
+
+zscores = pd.DataFrame({'subject': subList, 'data': dataList, 'modality': modalityList, 'layer':layerList, 'stimType':stimTypeList, 'contrast':contrastList,'focus':focusList, 'runType':runList})

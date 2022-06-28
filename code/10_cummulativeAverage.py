@@ -559,4 +559,182 @@ for focus in ['v1']:
     plt.legend(loc='upper right', fontsize=20)
     plt.savefig(f'../results/stabilizingPerEventWithCrit.png', bbox_inches = "tight")
     plt.show()
-    
+
+
+##############################################
+### Doing the same for layers individually ###
+##############################################
+
+layers = {'1':'deep','2':'middle','3':'superficial'}
+eventResults = np.load('../data/trialWiseResponses.npy',allow_pickle=True).item()
+
+
+modalityMeans = {}
+
+for focus in ['v1']:
+    print(focus)
+    modalityMeans[focus] = {}
+
+    for layer in range(1,4):
+        modalityMeans[focus][layers[str(layer)]] = {}
+
+        for modality in ['BOLD', 'VASO']:
+            print(modality)
+            modalityMeans[focus][layers[str(layer)]][modality] = {}
+
+            tmp = np.zeros(14)
+
+            for sub in subs:
+                print(sub)
+
+                if focus=='s1Focus' and sub == 'sub-09':
+                    continue
+
+                runs = [*eventResults[focus][sub]]
+
+                for run in runs:
+
+                    if 'Random' in run:
+                        continue
+
+
+                    trials = [*eventResults[focus][sub][run][modality]['visiotactile']['layer 1']]
+
+                    for trial in trials:
+                        nrTimePoints = len(eventResults[focus][sub][run][modality]['visiotactile'][f'layer {layer}'][trial][0])
+                        if nrTimePoints == 14:
+                            tmp = np.vstack((tmp, eventResults[focus][sub][run][modality]['visiotactile'][f'layer {layer}'][trial]))
+
+
+            tmp = np.delete(tmp, (0), axis=0)
+            tmpMean = np.mean(tmp, axis=0)
+            tmpDemean = tmpMean - np.mean(tmpMean)
+
+            # VASO is a negative contrast, therefore we have to switch the sign!
+            if modality == 'VASO':
+                tmpDemean = -tmpDemean
+
+            modalityMeans[focus][layers[str(layer)]][modality] = tmpDemean
+
+# plot mean responses to see whether they make sense
+for focus in ['v1']:
+    for modality in ['BOLD', 'VASO']:
+        plt.figure()
+        for layer in range(1,4):
+            plt.plot(modalityMeans[focus][layers[str(layer)]][modality], label=f'{modality} {layers[str(layer)]} mean')
+        plt.legend()
+        plt.title(focus)
+        plt.show()
+
+
+
+# subs = ['sub-05']
+
+subList = []
+runList = []
+nrTrialsList = []
+scoresList = []
+modalityList = []
+curentAverageList = []
+focusList = []
+layerList = []
+
+# Loop over sensory areas. We will only look at visual cortex here
+for focus in ['v1']:
+    print(focus)
+    for modality in ['BOLD', 'VASO']:
+        print(modality)
+        for sub in subs:
+            print(sub)
+
+            if focus=='s1' or sub == 'sub-09':
+                continue
+
+            # get subject-runs
+            runs = [*eventResults[focus][sub]]
+
+            for run in runs:
+                # because we have a different number of trials for randomized stimulation, we will skip these runs
+                # if 'Random' in run:
+                #     continue
+
+                # get list of trials that were included
+                trials = [*eventResults[focus][sub][run][modality]['visiotactile']['layer 1']]
+
+                print(len(trials))
+
+                for layer in range(1,4):
+
+
+                    # loop over trials to get cummulative average
+                    for idx,trial in enumerate(trials, start=1):
+                        # see whether trial window was completely acquired
+                        nrTimePoints = len(eventResults[focus][sub][run][modality]['visiotactile'][f'layer {layer}'][trial][0])
+
+                        # if not, go to next trial
+                        if nrTimePoints != 14:
+                            print(f'trial was not fully acquired')
+                            continue
+
+
+                        includedTrials = trials[:idx]
+
+                        # create empty array to stack other arrays with
+                        tmp = np.zeros(len(eventResults[focus][sub][run][modality]['visiotactile'][f'layer {layer}'][trial][0][3:-1]))
+
+                        # stack trials until now
+                        for includedTrial in includedTrials:
+
+                            trial = eventResults[focus][sub][run][modality]['visiotactile'][f'layer {layer}'][includedTrial][0][3:-1]
+
+
+
+                            # trial = np.mean(trial, axis=0)
+
+                            demeanTrial = trial - np.mean(trial)
+                            demeanTrialTrunc = demeanTrial.copy()
+                            tmp = np.vstack((tmp, demeanTrialTrunc))
+
+                        tmp = np.delete(tmp, (0), axis=0)
+                        tmp = np.mean(tmp, axis=0)
+                        tmp = tmp - np.mean(tmp)
+
+                        if modality=='VASO':
+                            tmp = -tmp
+
+                        sumOfSquares = np.sum(np.subtract(modalityMeans[focus][layers[str(layer)]][modality][3:-1],tmp)**2)
+
+                        subList.append(sub)
+                        runList.append(run)
+                        nrTrialsList.append(idx)
+                        scoresList.append(sumOfSquares)
+                        modalityList.append(modality)
+                        curentAverageList.append(tmp.copy())
+                        focusList.append(focus)
+                        layerList.append(layers[str(layer)])
+
+efficiencyData = pd.DataFrame({'subject':subList, 'run':runList, 'nrTrials':nrTrialsList, 'score':scoresList, "modality":modalityList, 'currentAverage': curentAverageList, 'focus':focusList, 'layer':layerList})
+
+
+
+# v1Palette = {
+#     'BOLD': 'tab:orange',
+#     'VASO': 'tab:blue'}
+
+for focus in ['v1']:
+    for modality in modalities:
+        data = efficiencyData.loc[(efficiencyData['focus']==focus)&(efficiencyData['modality']==modality)]
+        # data = efficiencyData.loc[(efficiencyData['focus']==focus)&(efficiencyData['subject']==sub)]
+
+        sns.lineplot(data=data, x='nrTrials', y='score', hue='layer', palette= 'rocket')
+
+        plt.title(f'{modality}', fontsize=24, pad=20)
+    #     plt.ylabel(f"sum of squares", fontsize=24)
+        plt.ylabel(f"error", fontsize=24)
+        plt.xlabel('averaged trials', fontsize=24)
+        plt.xticks(fontsize=18)
+        plt.yticks(fontsize=18)
+        plt.legend(loc='upper right', fontsize=20)
+        # plt.ylim(0,30)
+        plt.savefig(f'../results/stabilizingPerEventAcrossLayers{modality}.png', bbox_inches = "tight")
+        plt.show()
