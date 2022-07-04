@@ -366,10 +366,10 @@ FIRdata = pd.DataFrame({'subject':subList, 'run':runList, 'layer':layerList, 'mo
 
 
 FIRdata.to_csv('../results/FIR_results.csv',index=False)
-FIRdata = pd.read_csv('../results/FIR_results.csv')
+FIRdata = pd.read_csv('/Users/sebastiandresbach/git/eventRelatedVASO/results/FIR_results.csv')
 
 # for sub in ['sub-06', 'sub-07','sub-08', 'sub-09', 'sub-13', 'sub-14']:
-for sub in ['sub-12']:
+for sub in ['sub-14']:
     fig, axes = plt.subplots(1,2)
     for i, modality in enumerate(['BOLD', 'VASO']):
         tmp = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['subject']==sub)]
@@ -404,7 +404,7 @@ for focus, cmap in zip(['v1','s1'],palettes):
     fig, ax  = plt.subplots()
     sns.lineplot(data=FIRdata.loc[FIRdata['focus']==focus], x="volume", y="data", hue='modality',palette=cmap)
     plt.title('Group Finite Impulse Response', fontsize=24, pad=20)
-    plt.ylabel(r'% signal change', fontsize=24)
+    plt.ylabel(r'mean $ \beta $', fontsize=24)
     yLimits = ax.get_ylim()
 
     plt.ylim(0,yLimits[1])
@@ -413,12 +413,12 @@ for focus, cmap in zip(['v1','s1'],palettes):
     ticks = range(0,11)
     labels = (np.arange(0,11)*1.3).round(decimals=1)
 
-    plt.xticks(ticks, labels, fontsize=16, rotation=45)
-    plt.xlabel('Time (s)', fontsize=24)
+    plt.xticks(ticks[::2], labels[::2], fontsize=16)
+    plt.xlabel('Time [s]', fontsize=24)
 
     plt.axvspan(0, 2/1.3, color='grey', alpha=0.2, lw=0, label = 'stimulation on')
     plt.legend(loc='upper right', fontsize=14)
-    plt.savefig(f'{root}/Group_{focus}_FIR.png', bbox_inches = "tight")
+    plt.savefig(f'/Users/sebastiandresbach/git/eventRelatedVASO/results/Group_{focus}_FIR.png', bbox_inches = "tight")
 
     plt.show()
 
@@ -590,9 +590,9 @@ palettes = [palette1,palette2]
 fig, axes = plt.subplots(1,2, figsize=(15,5))
 
 for i, (modality,palette) in enumerate(zip(['BOLD','VASO'],palettes)):
-    sns.lineplot(ax = axes[i], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']==modality)], x="volume", y="data", hue='layer', palette=palette)
+    sns.lineplot(ax = axes[i], data=FIRdata.loc[(FIRdata['focus']=='v1')&(FIRdata['modality']==modality)], x="volume", y="data", hue='layer', palette='rocket')
 
-    axes[i].set_xlabel('Time (s)', fontsize=24)
+    axes[i].set_xlabel('Time [s]', fontsize=24)
 
 
     axes[i].set_title(modality, fontsize=24, pad=20)
@@ -600,19 +600,19 @@ for i, (modality,palette) in enumerate(zip(['BOLD','VASO'],palettes)):
 
     ticks = range(0,11)
     labels = (np.arange(0,11)*1.3).round(decimals=1)
-    axes[i].set_xticks(ticks)
-    axes[i].set_xticklabels(labels,fontsize=24,rotation=45)
+    axes[i].set_xticks(ticks[::2])
+    axes[i].set_xticklabels(labels[::2],fontsize=24)
 
     plt.setp(axes[i].get_yticklabels(), fontsize=24)
     axes[i].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 
-plt.rcParams['legend.title_fontsize'] = 20
-axes[0].legend().remove()
-axes[0].set_ylabel(r'% signal change', fontsize=24)
+axes[1].legend().remove()
+axes[0].legend(loc = 'upper right',fontsize=14)
+axes[0].set_ylabel(r'mean $ \beta $', fontsize=24)
 axes[1].set_ylabel('', fontsize=24)
 plt.tight_layout()
-plt.savefig('../results/new_layers.png')
+plt.savefig('/Users/sebastiandresbach/git/eventRelatedVASO/results/new_layers.png')
 plt.show()
 
 

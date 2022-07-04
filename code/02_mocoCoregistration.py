@@ -140,10 +140,10 @@ for sub in ['sub-09']:
         pd_ses.to_csv(f'{outFolder}/motionParameters/{base}_motionParameters.csv', index=False)
 
 
-
         os.system(f'/home/sebastian/abin/3dTcat -prefix {outFolder}/{base}_combined.nii  {outFolder}/{base}_moco_notnulled.nii {outFolder}/{base}_moco_nulled.nii -overwrite')
-
+        # Calculating T1w image in EPI space for each run
         os.system(f'/home/sebastian/abin/3dTstat -cvarinv -overwrite -prefix {outFolder}/{base}_T1w.nii {outFolder}/{base}_combined.nii')
+        # Running biasfieldcorrection
         os.system(f'/home/sebastian/antsInstallExample-master/install/bin/N4BiasFieldCorrection -d 3 -i {outFolder}/{base}_T1w.nii -o {outFolder}/{base}_T1w_N4Corrected.nii')
 
     ############################################################################
@@ -221,7 +221,7 @@ for sub in ['sub-09']:
                 ants.image_write(mywarpedimage, f'{outFolder}/{base}_{modality}_vol{i:03d}.nii')
 
             newData = np.zeros(data.shape)
-    
+
 
             for i in range(data.shape[-1]):
                 vol = nb.load(f'{outFolder}/{base}_{modality}_vol{i:03d}.nii').get_fdata()
