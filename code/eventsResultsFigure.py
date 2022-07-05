@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.interpolate import interp1d
 import os
+from matplotlib.ticker import FormatStrFormatter
 
 subs = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
 
@@ -27,8 +28,8 @@ timepointList = []
 dataList = []
 focusList = []
 
-for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-13', 'sub-14']:
-# for sub in ['sub-05']:
+# for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-13', 'sub-14']:
+for sub in ['sub-14']:
     runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*_run-00*_cbv.nii.gz'))
     for focus in ['v1', 's1']:
         for run in runs:
@@ -348,4 +349,190 @@ for focus in ['v1']:
     fig.tight_layout()
 
     plt.savefig(f'../results/group_{focus}_eventResults.png', bbox_inches = "tight")
+    plt.show()
+
+
+
+#####################################################
+################ Single subject plot ################
+#####################################################
+
+subList = []
+dataList = []
+modalityList = []
+layerList = []
+stimTypeList = []
+focusList = []
+contrastList = []
+runList = []
+
+root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
+
+
+
+# for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
+for sub in ['sub-14']:
+    # allRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
+    print(sub)
+
+    blockRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-block*run-00*_cbv.nii.gz'))
+
+    # see whether there are multiple sessions
+    sessions = []
+    for run in blockRuns:
+        if 'ses-001' in run:
+            sessions.append('ses-001')
+        if 'ses-002' in run:
+            sessions.append('ses-002')
+    sessions = set(sessions)
+
+    for ses in sessions:
+        print(f'{ses}')
+        focuses = []
+        for focus in ['v1', 's1']:
+            if not sub == 'sub-07':
+                try:
+                    mask = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii').get_fdata()
+                    focuses.append(focus)
+                except:
+                    print(f'{focus} not found')
+
+            if sub == 'sub-07':
+                try:
+                    mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_eventStim_layers_equidist.nii').get_fdata()
+                    focuses.append(focus)
+                except:
+                    print(f'{focus} not found')
+        print(f'found ROIs for: {focuses}')
+
+
+        for focus in focuses:
+            if not sub == 'sub-07':
+                mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii').get_fdata()
+
+            if sub == 'sub-07':
+                mask = nb.load(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{sub}_masks/{sub}_{focus}_11layers_eventStim_layers_equidist.nii').get_fdata()
+
+            for task in ['eventStimRandom', 'eventStim', 'eventStimVisOnly']:
+
+                eventRuns = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_*_task-{task}_run-00*_cbv.nii.gz'))
+
+                if len(eventRuns)==0:
+                    print(f'no runs found for {task}.')
+                    continue
+
+                for modality in ['BOLD','VASO']:
+
+
+                    if task == 'eventStim':
+                        data = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_{ses}_task-{task}_secondLevel_{modality}.gfeat/cope1.feat/stats/zstat1_scaled.nii.gz').get_fdata()
+
+                        for j in range(1,12):  # Compute bin averages
+                            layerRoi = mask == j
+                            mask_mean = np.mean(data[layerRoi.astype(bool)])
+
+                            subList.append(sub)
+                            dataList.append(mask_mean)
+                            modalityList.append(modality[:4])
+                            layerList.append(j)
+                            stimTypeList.append(task)
+                            contrastList.append('visiotactile')
+                            focusList.append(focus)
+                            runList.append('eventStim')
+
+                    elif task == 'eventStimRandom':
+                        for i, contrast in enumerate(['visual', 'visiotactile', 'visual&visiotactile', 'visiotactile > visual'], start = 1):
+                            data = nb.load(f'{root}/derivatives/{sub}/{ses}/{sub}_{ses}_task-{task}_secondLevel_{modality}.gfeat/cope{i}.feat/stats/zstat1_scaled.nii.gz').get_fdata()
+
+                            for j in range(1,12):  # Compute bin averages
+                                layerRoi = mask == j
+                                mask_mean = np.mean(data[layerRoi.astype(bool)])
+
+                                subList.append(sub)
+                                dataList.append(mask_mean)
+                                modalityList.append(modality[:4])
+                                layerList.append(j)
+                                stimTypeList.append(task)
+                                contrastList.append(contrast)
+                                focusList.append(focus)
+                                runList.append('eventStim')
+
+
+
+zscores = pd.DataFrame({'subject': subList, 'data': dataList, 'modality': modalityList, 'layer':layerList, 'stimType':stimTypeList, 'contrast':contrastList,'focus':focusList, 'runType':runList})
+
+
+plt.style.use('dark_background')
+
+v1Palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:blue'}
+
+
+
+
+for focus in ['v1']:
+    fig, (ax1,ax2) = plt.subplots(2,1,figsize=(7.5,10))
+
+    sns.lineplot(ax=ax1, data=FIRdata.loc[FIRdata['focus']==focus], x="volume", y="data", hue='modality',palette=v1Palette,linewidth=2)
+
+    ax1.set_ylabel(r'Signal [$\beta$]', fontsize=24)
+    yLimits = ax1.get_ylim()
+
+    ax1.set_ylim(0,yLimits[1])
+    ax1.set_yticks(range(-1,int(yLimits[1])+1),fontsize=18)
+
+    # prepare x-ticks
+    ticks = range(0,11)
+    labels = (np.arange(0,11)*1.3).round(decimals=1)
+    for k,label in enumerate(labels):
+        if (label - int(label) == 0):
+            labels[k] = int(label)
+
+    ax1.yaxis.set_tick_params(labelsize=18)
+    ax1.xaxis.set_tick_params(labelsize=18)
+
+    # tweak x-axis
+    ax1.set_xticks(ticks[::2])
+    ax1.set_xticklabels(labels[::2],fontsize=18)
+    ax1.set_xlabel('Time [s]', fontsize=24)
+
+    # draw lines
+    ax1.axvspan(0, 2/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
+    ax1.axhline(0,linestyle='--',color='white')
+
+
+
+
+    # Set up second plot
+    data = zscores.loc[(zscores['contrast']=='visual&visiotactile')]
+
+    sns.lineplot(ax= ax2, data=data, x='layer', y='data', hue='modality', palette= v1Palette, linewidth=2)
+
+    ax2.set_xlabel('WM                                                CSF', fontsize=24)
+    ax2.set_xticks([])
+
+    # ax2.set_yticks(fontsize=18)
+    ax2.set_ylabel(f'Z-score', fontsize=24)
+
+    ax2.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
+    # ax2.set_ylabel(f"error", fontsize=24)
+    # ax2.set_xlabel('averaged trials', fontsize=24)
+    #
+    #
+    ax2.yaxis.set_tick_params(labelsize=18)
+    # ax2.xaxis.set_tick_params(labelsize=18)
+    # ax2.set_ylim(0,25)
+    #
+    #
+    # ax2.vlines(timePoint, ymin=0,ymax=30, label='5% error', linestyle='dashed',color='white')
+    #
+
+
+    ax2.legend().remove()
+    ax1.legend().remove()
+    fig.tight_layout()
+
+    plt.savefig(f'../results/sub-14_{focus}_eventResults.png', bbox_inches = "tight")
     plt.show()
