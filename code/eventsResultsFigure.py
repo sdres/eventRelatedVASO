@@ -512,22 +512,11 @@ for focus in ['v1']:
     ax2.set_xlabel('WM                                                CSF', fontsize=24)
     ax2.set_xticks([])
 
-    # ax2.set_yticks(fontsize=18)
     ax2.set_ylabel(f'Z-score', fontsize=24)
 
     ax2.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
-    # ax2.set_ylabel(f"error", fontsize=24)
-    # ax2.set_xlabel('averaged trials', fontsize=24)
-    #
-    #
     ax2.yaxis.set_tick_params(labelsize=18)
-    # ax2.xaxis.set_tick_params(labelsize=18)
-    # ax2.set_ylim(0,25)
-    #
-    #
-    # ax2.vlines(timePoint, ymin=0,ymax=30, label='5% error', linestyle='dashed',color='white')
-    #
 
 
     ax2.legend().remove()
@@ -536,3 +525,74 @@ for focus in ['v1']:
 
     plt.savefig(f'../results/sub-14_{focus}_eventResults.png', bbox_inches = "tight")
     plt.show()
+
+
+
+
+import matplotlib.gridspec as gridspec
+
+palettesLayers = {'BOLD':['#1f77b4','#7dadd9','#c9e5ff'],
+'VASO':['#ff7f0e', '#ffae6f','#ffdbc2']}
+
+
+fig = plt.figure(tight_layout=True,figsize=(7.5,10))
+gs = gridspec.GridSpec(2, 2)
+
+
+ax3 = fig.add_subplot(gs[1, :])
+
+for i, modality in enumerate(['BOLD', 'VASO']):
+
+    data = FIRdata.loc[(FIRdata['modality']==modality)&((FIRdata['run'].str.contains('run-002')))]
+    ax = fig.add_subplot(gs[0, i])
+
+    sns.lineplot(ax=ax, data=data , x="volume", y="data", hue='layer',palette=palettesLayers[modality],linewidth=3)
+
+
+    yLimits = ax.get_ylim()
+    ax.set_ylim(-2,7)
+    ax.set_yticks(range(-2,8,2),fontsize=18)
+
+    # prepare x-ticks
+    ticks = range(0,11,2)
+    labels = (np.arange(0,11,2)*1.3).round(decimals=1)
+    for k,label in enumerate(labels):
+        if (label - int(label) == 0):
+            labels[k] = int(label)
+
+    ax.yaxis.set_tick_params(labelsize=18)
+    ax.xaxis.set_tick_params(labelsize=18)
+
+    if i == 0:
+        ax.set_ylabel(r'Signal [$\beta$]', fontsize=24)
+    else:
+        ax.set_ylabel(r'', fontsize=24)
+
+
+    # tweak x-axis
+    ax.set_xticks(ticks[::2])
+    ax.set_xticklabels(labels[::2],fontsize=18)
+    ax.set_xlabel('Time [s]', fontsize=24)
+    ax.set_title(modality, fontsize=24)
+
+    # draw lines
+    ax.axvspan(0, 2/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
+    ax.axhline(0,linestyle='--',color='white')
+
+# Set up second plot
+data = zscores.loc[(zscores['contrast']=='visual&visiotactile')]
+
+sns.lineplot(ax= ax3, data=data, x='layer', y='data', hue='modality', palette= v1Palette, linewidth=3)
+
+ax3.set_xlabel('WM                                                CSF', fontsize=24)
+ax3.set_xticks([])
+ax3.legend().set_title('')
+ax3.set_ylabel(f'Z-score', fontsize=24)
+ax3.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+ax3.yaxis.set_tick_params(labelsize=18)
+ax3.legend().remove()
+
+plt.savefig(f'../results/sub-14_{focus}_eventResults_withLayers.png', bbox_inches = "tight")
+
+
+plt.show()
