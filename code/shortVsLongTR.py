@@ -293,7 +293,7 @@ fig, axs = plt.subplots(2,2, figsize=(10,10))
 for i, modality in enumerate(['BOLD','VASO']):
     sns.kdeplot(ax=axs[i,0],data=tSNRdata.loc[tSNRdata['modality']==modality],x='tSNR',hue='TRlength',linewidth=2, palette=palette)
     axs[i,0].set_yticks([])
-    axs[i,0].set_ylabel('voxel count',fontsize=20)
+    axs[i,0].set_ylabel('Density',fontsize=20)
     axs[i,0].set_xlim(0,45)
     axs[i,0].legend().remove()
 # adapt x-axis

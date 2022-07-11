@@ -28,8 +28,8 @@ timepointList = []
 dataList = []
 focusList = []
 
-# for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-13', 'sub-14']:
-for sub in ['sub-14']:
+for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-13', 'sub-14']:
+# for sub in ['sub-14']:
     runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*_run-00*_cbv.nii.gz'))
     for focus in ['v1', 's1']:
         for run in runs:
@@ -370,8 +370,8 @@ root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
 
 
 
-# for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
-for sub in ['sub-14']:
+for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
+# for sub in ['sub-14']:
     # allRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
     print(sub)
 
@@ -531,8 +531,8 @@ for focus in ['v1']:
 
 import matplotlib.gridspec as gridspec
 
-palettesLayers = {'BOLD':['#1f77b4','#7dadd9','#c9e5ff'],
-'VASO':['#ff7f0e', '#ffae6f','#ffdbc2']}
+palettesLayers = {'VASO':['#1f77b4','#7dadd9','#c9e5ff'],
+'BOLD':['#ff7f0e', '#ffae6f','#ffdbc2']}
 
 
 fig = plt.figure(tight_layout=True,figsize=(7.5,10))
@@ -543,18 +543,18 @@ ax3 = fig.add_subplot(gs[1, :])
 
 for i, modality in enumerate(['BOLD', 'VASO']):
 
-    data = FIRdata.loc[(FIRdata['modality']==modality)&((FIRdata['run'].str.contains('run-002')))]
+    data = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['focus']=='v1')]
     ax = fig.add_subplot(gs[0, i])
 
-    sns.lineplot(ax=ax, data=data , x="volume", y="data", hue='layer',palette=palettesLayers[modality],linewidth=3)
+    sns.lineplot(ax=ax, data=data , x="volume", y="data", hue='layer',palette=palettesLayers[modality],linewidth=2)
 
 
     yLimits = ax.get_ylim()
-    ax.set_ylim(-2,7)
-    ax.set_yticks(range(-2,8,2),fontsize=18)
+    ax.set_ylim(-2,9)
+    ax.set_yticks(range(-2,10,2),fontsize=18)
 
     # prepare x-ticks
-    ticks = range(0,11,2)
+    ticks = range(1,12,2)
     labels = (np.arange(0,11,2)*1.3).round(decimals=1)
     for k,label in enumerate(labels):
         if (label - int(label) == 0):
@@ -567,7 +567,9 @@ for i, modality in enumerate(['BOLD', 'VASO']):
         ax.set_ylabel(r'Signal [$\beta$]', fontsize=24)
     else:
         ax.set_ylabel(r'', fontsize=24)
+        ax.set_yticks([])
 
+    ax.legend(loc='upper right',fontsize=12)
 
     # tweak x-axis
     ax.set_xticks(ticks[::2])
@@ -576,13 +578,13 @@ for i, modality in enumerate(['BOLD', 'VASO']):
     ax.set_title(modality, fontsize=24)
 
     # draw lines
-    ax.axvspan(0, 2/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
+    ax.axvspan(1, 3/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
     ax.axhline(0,linestyle='--',color='white')
 
 # Set up second plot
-data = zscores.loc[(zscores['contrast']=='visual&visiotactile')]
+data = zscores.loc[(zscores['contrast']=='visiotactile')&(zscores['focus']=='v1')]
 
-sns.lineplot(ax= ax3, data=data, x='layer', y='data', hue='modality', palette= v1Palette, linewidth=3)
+sns.lineplot(ax= ax3, data=data, x='layer', y='data', hue='modality', palette= v1Palette, linewidth=2)
 
 ax3.set_xlabel('WM                                                CSF', fontsize=24)
 ax3.set_xticks([])
@@ -590,9 +592,59 @@ ax3.legend().set_title('')
 ax3.set_ylabel(f'Z-score', fontsize=24)
 ax3.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 ax3.yaxis.set_tick_params(labelsize=18)
-ax3.legend().remove()
+ax3.legend(loc='upper left',fontsize=12)
 
-plt.savefig(f'../results/sub-14_{focus}_eventResults_withLayers.png', bbox_inches = "tight")
+plt.savefig(f'../results/groupLevel_{focus}_eventResults_withLayers.png', bbox_inches = "tight")
+
+
+plt.show()
+
+
+
+
+fig = plt.figure(tight_layout=True,figsize=(10.394,6.299))
+
+for i, modality in enumerate(['BOLD', 'VASO']):
+
+    data = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['focus']=='v1')]
+    ax = fig.add_subplot(gs[0, i])
+
+    sns.lineplot(ax=ax, data=data , x="volume", y="data", hue='layer',palette=palettesLayers[modality],linewidth=2)
+
+
+    yLimits = ax.get_ylim()
+    ax.set_ylim(-2,9)
+    ax.set_yticks(range(-2,10,2),fontsize=18)
+
+    # prepare x-ticks
+    ticks = range(1,12,2)
+    labels = (np.arange(0,11,2)*1.3).round(decimals=1)
+    for k,label in enumerate(labels):
+        if (label - int(label) == 0):
+            labels[k] = int(label)
+
+    ax.yaxis.set_tick_params(labelsize=18)
+    ax.xaxis.set_tick_params(labelsize=18)
+
+    if i == 0:
+        ax.set_ylabel(r'Signal [$\beta$]', fontsize=24)
+    else:
+        ax.set_ylabel(r'', fontsize=24)
+        ax.set_yticks([])
+
+    ax.legend(loc='upper right',fontsize=12)
+
+    # tweak x-axis
+    ax.set_xticks(ticks[::2])
+    ax.set_xticklabels(labels[::2],fontsize=18)
+    ax.set_xlabel('Time [s]', fontsize=24)
+    ax.set_title(modality, fontsize=24)
+
+    # draw lines
+    ax.axvspan(1, 3/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
+    ax.axhline(0,linestyle='--',color='white')
+
+plt.savefig(f'../results/groupLevel_{focus}_eventResults_withLayers.png', bbox_inches = "tight")
 
 
 plt.show()

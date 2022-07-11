@@ -207,17 +207,18 @@ palettes = [v1Palette,s1Palette]
 
 plt.style.use('dark_background')
 
-for focus in ['v1','s1']:
-    fig, ax = plt.subplots(figsize=(7,5))
-    sns.lineplot(data=blockData.loc[(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = v1Palette)
+for focus in ['v1']:
+    fig, ax = plt.subplots(figsize=(10,6))
+    sns.lineplot(ax=ax,data=blockData.loc[(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = v1Palette, linewidth=2)
 
 
-    plt.axvspan(4, 4+(30/tr), color='grey', alpha=0.2, lw=0, label = 'stimulation')
-    plt.ylabel('signal change [%]', fontsize=24)
+    plt.axvspan(4, 4+(30/tr), color='white', alpha=0.2, lw=0)
+    plt.ylabel('Signal change [%]', fontsize=24)
     plt.xlabel('Time [s]', fontsize=24)
     # plt.title(f"Group Response Timecourse", fontsize=24, pad=20)
-    plt.legend(loc='lower center', fontsize=14)
+    plt.legend(loc='lower center', fontsize=18)
 
+    plt.axhline(0,linestyle='--',color='white')
 
     values = (np.arange(-4,len(blockData['x'].unique())-4,4)*tr).round().astype(int)
     spacing = np.arange(0,len(blockData['x'].unique()),4)
@@ -327,6 +328,25 @@ import matplotlib.gridspec as gridspec
 
 zscores = pd.DataFrame({'subject': subList, 'data': dataList, 'modality': modalityList, 'layer':layerList, 'stimType':stimTypeList, 'contrast':contrastList,'focus':focusList, 'runType':runList})
 
+for focus in ['v1']:
+    fig, ax = plt.subplots(figsize=(10,6))
+
+    tmp = zscores.loc[(zscores['focus']==focus)&(zscores['stimType']== 'blockStim')]
+    sns.lineplot(ax=ax, data=tmp, x='layer', y='data', hue='modality',palette=v1Palette,linewidth=2)
+
+    ax.set_ylabel(f'Z-score', fontsize=24)
+    ax.set_xticks([])
+
+    ax.set_xlabel('WM                                                                       CSF', fontsize=24)
+    ax.tick_params(axis='y', labelsize=18)
+
+    fig.tight_layout()
+    ax.set_yticks(np.arange(0,19,3))
+
+    plt.legend(loc = 'upper left', fontsize=18)
+
+    plt.savefig(f'../results/group_{focus}_BlockProfiles.png', bbox_inches = "tight")
+    plt.show()
 
 
 for sub in subs:
@@ -349,17 +369,18 @@ for sub in subs:
         # plt.savefig(f'{root}/{sub}_{focus}_BlockResults.png', bbox_inches = "tight")
         plt.show()
 
+
 for focus in ['v1']:
-    fig, (ax1,ax2) = plt.subplots(2,1,figsize=(7.5,10))
+    fig, (ax1,ax2) = plt.subplots(2,1,figsize=(10,12.5))
 
 
-    sns.lineplot(ax=ax1, data=blockData.loc[(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = v1Palette)
+    sns.lineplot(ax=ax1, data=blockData.loc[(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = v1Palette,linewidth=2)
 
 
-    ax1.axvspan(4, 4+(30/tr), color='grey', alpha=0.2, lw=0, label = 'stimulation')
-    ax1.set_ylabel('signal change [%]', fontsize=24)
+    ax1.axvspan(4, 4+(30/tr), color='grey', alpha=0.2, lw=0)
+    ax1.set_ylabel('Signal change [%]', fontsize=24)
     ax1.set_xlabel('Time [s]', fontsize=24)
-    ax1.legend(loc='lower center', fontsize=14)
+    ax1.legend(loc='upper left', fontsize=14)
 
     values = (np.arange(-4,len(blockData['x'].unique())-4,4)*tr).round().astype(int)
     spacing = np.arange(0,len(blockData['x'].unique()),4)
@@ -371,16 +392,17 @@ for focus in ['v1']:
 
 
     tmp = zscores.loc[(zscores['focus']==focus)&(zscores['stimType']== 'blockStim')]
-    sns.lineplot(ax=ax2, data=tmp, x='layer', y='data', hue='modality',palette=v1Palette)
+    sns.lineplot(ax=ax2, data=tmp, x='layer', y='data', hue='modality',palette=v1Palette,linewidth=2)
 
-    ax2.set_ylabel(f'z-score', fontsize=24)
+    ax2.set_ylabel(f'Z-score', fontsize=24)
     ax2.set_xticks([])
 
-    ax2.set_xlabel('WM                                                 CSF', fontsize=24)
+    ax2.set_xlabel('WM                                                                       CSF', fontsize=24)
     ax2.tick_params(axis='y', labelsize=18)
+    ax2.legend(loc='upper left', fontsize=14)
 
-    ax2.legend().remove()
-    ax1.legend().remove()
+    # ax2.legend().remove()
+    # ax1.legend().remove()
 
     fig.tight_layout()
 

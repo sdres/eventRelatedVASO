@@ -493,7 +493,7 @@ for focus, cmap in zip(['v1'],palettes):
 
     fig, axes = plt.subplots(1,2, figsize=(16,6))
     for i, modality in enumerate(['BOLD', 'VASO']):
-        tmp = FIRdata.loc[(FIRdata['modality']==modality)]
+        tmp = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['focus']==focus)]
         sns.lineplot(ax = axes[i], data=tmp, x="volume", y="data", hue='layer',palette='rocket')
         axes[i].set_title(modality, fontsize=32)
 
