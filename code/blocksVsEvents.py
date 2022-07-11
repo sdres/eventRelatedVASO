@@ -207,6 +207,8 @@ for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-
 zscores = pd.DataFrame({'subject': subList, 'data': dataList, 'modality': modalityList, 'layer':layerList, 'stimType':stimTypeList, 'contrast':contrastList,'focus':focusList, 'runType':runList})
 zscores
 
+zscores.to_csv('../results/blocksVsEventsData.csv', sep=',', index=False)
+
 
 zscores['contrast'].unique()
 
@@ -308,4 +310,4 @@ for sub in ['sub-14','sub-08']:
             plt.ylabel(f'{focus[:2]} z-score', fontsize=24)
 
             plt.title(f"{sub} {modality} z-scores across layers", fontsize=24, pad=20)
-            plt.xlabel('WM                        
+            plt.xlabel('WM
