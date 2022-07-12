@@ -1002,3 +1002,170 @@ for focus in ['v1']:
     plt.savefig(f'{root}/Group_{focus}_FIR_norm.png', bbox_inches = "tight")
 
     plt.show()
+
+
+
+
+
+
+
+###################################
+########### FIR random ############
+###################################
+
+
+layers = {'1':'deep','2':'middle','3':'superficial'}
+
+subList = []
+runList = []
+modalityList = []
+layerList = []
+timepointList = []
+dataList = []
+focusList = []
+conditionList = []
+
+for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-13', 'sub-14']:
+# for sub in ['sub-05']:
+    runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*_run-00*_cbv.nii.gz'))
+    # for focus in ['v1', 's1']:
+    for focus in ['v1']:
+        for run in runs:
+
+            base = os.path.basename(run).rsplit('.', 2)[0][:-4]
+            print(base)
+
+            if 'Random' in base:
+                print('processing...')
+            else:
+                print('skipping...')
+                continue
+
+            if 'ses-001' in base:
+                ses = 'ses-001'
+            else:
+                ses= 'ses-002'
+
+            if sub == 'sub-09' and '4' in run:
+                print('skipping')
+                continue
+
+            for modality in ['BOLD', 'VASO']:
+                print(modality)
+
+                timepoint = 0
+
+                for pe in range(1,21):
+
+
+                    if pe == 11:
+                        timepoint = 0
+
+                    timepoint = timepoint + 1
+
+                    print(f'PE :{pe}')
+                    print(f'timepoint :{timepoint}')
+
+                    try:
+                        dataFile = f'{root}/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_layers_FIR.feat/stats/pe{pe}.nii.gz'
+                        dataNii = nb.load(dataFile)
+                        data = dataNii.get_fdata()
+
+                    except:
+                        print(f'data missing')
+                        continue
+
+
+                    for layer in layers.keys():
+                        subList.append(sub)
+                        runList.append(base)
+                        modalityList.append(modality)
+                        layerList.append(layers[layer])
+                        timepointList.append(timepoint)
+                        focusList.append(focus)
+
+                        if modality =='BOLD':
+                            dataList.append(data[int(layer)-1])
+                        if modality =='VASO':
+                            dataList.append(-data[int(layer)-1])
+
+
+                        if pe <= 10:
+                            conditionList.append('visual')
+                            print('visual')
+                        if pe >= 11:
+                            conditionList.append('visiotactile')
+                            print('visiotactile')
+                    # dataFile = f'{root}/derivatives/{sub}/ses-001/{base}_{modality}_vessel_FIR.feat/stats/pe{timepoint}.nii.gz'
+                    # dataNii = nb.load(dataFile)
+                    # data = dataNii.get_fdata()
+                    #
+                    # subList.append(sub)
+                    # runList.append(base)
+                    # modalityList.append(modality)
+                    # layerList.append('vessel')
+                    # timepointList.append(timepoint)
+                    # if modality =='BOLD':
+                    #     dataList.append(data[0])
+                    # if modality =='VASO':
+                    #     dataList.append(-data[0])
+
+FIRdata = pd.DataFrame({'subject':subList, 'run':runList, 'layer':layerList, 'modality':modalityList, 'data':dataList, 'volume':timepointList, 'focus':focusList, 'condition':conditionList})
+
+FIRdata.to_csv('../results/FIRdataRandom.csv', index=False)
+
+for modality in ['BOLD', 'VASO']:
+    fig, axes = plt.subplots(1,3)
+    fig.subplots_adjust(top=0.8)
+    for i, layer in enumerate(['superficial', 'middle', 'deep']):
+
+
+        data = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['layer']==layer)]
+
+        sns.lineplot(ax=axes[i], data=data, x='volume', y='data', hue='condition')
+
+        axes[i].axvspan(0, 2/tr, color='grey', alpha=0.2, lw=0)
+        axes[i].set_xlabel('Timepoints', fontsize=20)
+        axes[i].set_title(layer)
+
+    axes[0].get_legend().remove()
+    axes[1].get_legend().remove()
+    axes[2].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    axes[0].set_ylabel(r'mean $\beta$', fontsize=20)
+    axes[1].set_ylabel('', fontsize=24)
+    plt.suptitle(f'{modality}', fontsize=28, y=0.98)
+    # plt.savefig(f'{decoRoot}/FIR_{modality}_layers.png', bbox_inches = "tight")
+    plt.show()
+
+
+
+tr = 1.3
+for sub in FIRdata['subject'].unique():
+
+    for modality in ['BOLD', 'VASO']:
+        fig, axes = plt.subplots(1,3)
+        fig.subplots_adjust(top=0.8)
+        for i, layer in enumerate(['superficial', 'middle', 'deep']):
+
+
+            data = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['layer']==layer)&(FIRdata['subject']==sub)]
+
+            sns.lineplot(ax=axes[i], data=data, x='volume', y='data', hue='condition')
+
+            axes[i].axvspan(0, 2/tr, color='grey', alpha=0.2, lw=0)
+            axes[i].set_xlabel('Timepoints', fontsize=20)
+            axes[i].set_title(layer)
+
+        axes[0].get_legend().remove()
+        axes[1].get_legend().remove()
+        axes[2].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+        axes[0].set_ylabel(r'mean $\beta$', fontsize=20)
+        axes[1].set_ylabel('', fontsize=24)
+        plt.suptitle(f'{sub}_{modality}', fontsize=28, y=0.98)
+        # plt.savefig(f'{decoRoot}/FIR_{modality}_layers.png', bbox_inches = "tight")
+        plt.show()
+
+
+ # FIRdata.to_csv('../results/FIR_results.csv',index=False)

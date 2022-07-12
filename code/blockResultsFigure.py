@@ -16,8 +16,8 @@ root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
 modalities = ['BOLD', 'VASO']
 
 blockResults = {}
-# for focus in ['v1','s1']:
-for focus in ['v1']:
+for focus in ['v1','s1']:
+# for focus in ['v1']:
     print((focus))
 
     blockResults[focus] = {}
@@ -207,7 +207,7 @@ palettes = [v1Palette,s1Palette]
 
 plt.style.use('dark_background')
 
-for focus in ['v1']:
+for focus in ['s1']:
     fig, ax = plt.subplots(figsize=(10,6))
     sns.lineplot(ax=ax,data=blockData.loc[(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = v1Palette, linewidth=2)
 
@@ -225,7 +225,7 @@ for focus in ['v1']:
 
     plt.xticks(spacing,values, fontsize=18)
     plt.yticks(fontsize=18)
-    plt.savefig(f'../results/group_{focus}_BlockResults_ts.png', bbox_inches = "tight")
+    # plt.savefig(f'../results/group_{focus}_BlockResults_ts.png', bbox_inches = "tight")
     plt.show()
 
 

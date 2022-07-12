@@ -82,7 +82,7 @@ for sub in subs:
 
 tSNRdata = pd.DataFrame({'subject':subList, 'modality':modalityList, 'tSNR': tSNRList, 'mean': meanList, 'voxel': voxelList, 'run':runList, 'focus':focusList, 'TRlength':TRlist})
 
-
+tSNRdata.to_csv('../results/shortVsLongTRData.csv', index=False,sep=',')
 
 
 plt.style.use('dark_background')

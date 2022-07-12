@@ -7,7 +7,7 @@ import os
 
 root = f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
 
-for sub in ['sub-13']:
+for sub in ['sub-05']:
 
     maskFolder = f'{root}/derivatives/{sub}/ses-001/{sub}_masks'
 

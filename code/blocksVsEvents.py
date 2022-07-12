@@ -23,8 +23,8 @@ root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
 
 ### block profiles
 
-for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
-# for sub in ['sub-12']:
+# for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
+for sub in ['sub-11']:
     # allRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
     print(sub)
 
@@ -108,8 +108,8 @@ for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-
 
 ### event profiles
 
-for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
-# for sub in ['sub-12']:
+# for sub in ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']:
+for sub in ['sub-11']:
     # allRuns = sorted(glob.glob(f'{root}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
     print(sub)
 
@@ -228,7 +228,7 @@ palettes = [VASOcmap,BOLDcmap]
 from matplotlib.ticker import MaxNLocator
 
 # for focus, cmap in zip(['s1', 'v1'],['Dark2', 'tab10']):
-for focus in ['v1']:
+for focus in ['s1']:
     for modality,cmap in zip(['VASO', 'BOLD'],palettes):
         fig, ax = plt.subplots(figsize=(10,7))
         tmp = zscores.loc[(zscores['modality']==modality)&(zscores['focus']==focus)&(zscores['contrast']=='visiotactile')&(zscores['stimType']!='blockStimLongTR')]
@@ -247,7 +247,7 @@ for focus in ['v1']:
         plt.xticks([])
 
         plt.yticks(fontsize=18)
-        if modality == 'VASO'
+        # if modality == 'VASO'
         # ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
         plt.legend(loc='upper left')
@@ -256,7 +256,7 @@ for focus in ['v1']:
         plt.ylim(0,yLimits[1])
         plt.legend(loc='upper left',fontsize=18)
 
-        plt.savefig(f'../results/Group_{focus}_{modality}_zScoreProfile.png', bbox_inches = "tight")
+        # plt.savefig(f'../results/Group_{focus}_{modality}_zScoreProfile.png', bbox_inches = "tight")
         plt.show()
 
 
