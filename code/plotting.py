@@ -507,232 +507,6 @@ plt.show()
 
 
 
-
-################################################################################
-####################################   S1   ####################################
-################################################################################
-
-
-
-###########################################
-########## Plot block timcourses ##########
-###########################################
-
-data = pd.read_csv('../results/blockTimecourseResults.csv')
-
-fig, ax = plt.subplots(figsize=FS)
-
-sns.lineplot(ax=ax, data=data.loc[(data['focus']=='s1')], x='x', y='data', hue='modality', palette = palette,linewidth=LW)
-
-
-ax.axvspan(4, 4+(30/TR), color='grey', alpha=0.2, lw=0)
-ax.set_ylabel('Signal change [%]', fontsize=labelSize)
-ax.set_xlabel('Time [s]', fontsize=labelSize)
-ax.legend(loc='lower center', fontsize=tickLabelSize)
-
-values = (np.arange(-4,len(data['x'].unique())-4,4)*TR).round().astype(int)
-spacing = np.arange(0,len(data['x'].unique()),4)
-ax.set_xticks(spacing,values, fontsize=tickLabelSize)
-
-ax.tick_params(axis='y', labelsize=tickLabelSize)
-ax.axhline(0,linestyle='--',color='white')
-plt.savefig('../results/blockTimecourseResults_s1.png',
-    bbox_inches = 'tight')
-plt.show()
-
-
-#########################################
-########## Plot block profiles ##########
-#########################################
-
-# load data
-zscores = pd.read_csv('../results/blocksVsEventsData.csv')
-# Limit plotting to modality, focus and visiotactile stimulation and remove
-# long TR block stimulation for fair comparisons
-tmp = zscores.loc[
-    (zscores['runType']=='blockStim')
-    & (zscores['focus']==focus)
-    & (zscores['contrast']=='visiotactile')
-    & (zscores['stimType']!='blockStimLongTR')
-    ]
-
-palette = {
-    'BOLD': 'tab:orange',
-    'VASO': 'tab:blue'
-    }
-
-
-fig, ax = plt.subplots(figsize=FS)
-
-sns.lineplot(ax=ax,
-    data=tmp,
-    x='layer',
-    y='data',
-    hue='modality',
-    palette=palette,
-    linewidth = LW
-    )
-
-
-plt.ylabel(f'Z-score',
-    fontsize=labelSize
-    )
-
-plt.xlabel('Cortical depth',
-    fontsize = labelSize
-    )
-
-
-ax.set_xticks([1,11],['WM', 'CSF'],
-    fontsize = tickLabelSize
-    )
-
-# Remove ticks for x-axis
-# plt.xticks([])
-
-
-plt.yticks(fontsize = tickLabelSize)
-
-plt.legend(loc = 'upper left',
-    fontsize = legendTextSize
-    )
-
-current_values = plt.gca().get_yticks()
-plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
-
-plt.savefig(f'../results/Group_v1_blockProfiles.png',
-    bbox_inches = 'tight')
-
-plt.show()
-
-
-#####################################
-########## Plot event FIRs ##########
-#####################################
-
-data = pd.read_csv('../results/FIR_results.csv')
-palettesLayers = {'VASO':['#1f77b4','#7dadd9','#c9e5ff'],
-'BOLD':['#ff7f0e', '#ffae6f','#ffdbc2']}
-
-
-for i, modality in enumerate(['BOLD', 'VASO']):
-
-    fig, ax = plt.subplots(figsize=FS)
-
-    tmp = data.loc[(data['modality']==modality)&(data['focus']=='v1')]
-
-    sns.lineplot(ax=ax, data=tmp , x="volume", y="data", hue='layer',palette=palettesLayers[modality],linewidth=2)
-
-
-    yLimits = ax.get_ylim()
-    ax.set_ylim(-2,9)
-    ax.set_yticks(range(-2,10,2),fontsize=18)
-
-    # prepare x-ticks
-    ticks = range(1,12,2)
-    labels = (np.arange(0,11,2)*1.3).round(decimals=1)
-    for k,label in enumerate(labels):
-        if (label - int(label) == 0):
-            labels[k] = int(label)
-
-    ax.yaxis.set_tick_params(labelsize=tickLabelSize)
-    ax.xaxis.set_tick_params(labelsize=tickLabelSize)
-
-    if i == 0:
-        ax.set_ylabel(r'Signal [$\beta$]', fontsize=labelSize)
-    else:
-        ax.set_ylabel(r'', fontsize=labelSize)
-        ax.set_yticks([])
-
-    ax.legend(loc='upper right',fontsize=tickLabelSize)
-
-    # tweak x-axis
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(labels,
-        fontsize=tickLabelSize)
-    ax.set_xlabel('Time [s]',
-        fontsize=labelSize)
-    ax.set_title(modality, fontsize=36)
-
-    # draw lines
-    ax.axvspan(1, 3/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
-    ax.axhline(0,linestyle='--',color='white')
-
-
-    # ax.axvline((np.arange(0,11)*1.3).round(decimals=1)[3],linestyle='--',color='white')
-
-    plt.savefig(f'../results/groupLevel_{focus}_{modality}_eventResults_withLayers.png', bbox_inches = "tight")
-
-
-    plt.show()
-
-#########################################
-########## Plot event profiles ##########
-#########################################
-
-# load data
-zscores = pd.read_csv('../results/blocksVsEventsData.csv')
-# Limit plotting to modality, focus and visiotactile stimulation and remove
-# long TR block stimulation for fair comparisons
-tmp = zscores.loc[
-    (zscores['runType']=='eventStim')
-    & (zscores['focus']==focus)
-    & (zscores['contrast']=='visiotactile')
-    & (zscores['stimType']!='blockStimLongTR')
-    ]
-
-palette = {
-    'BOLD': 'tab:orange',
-    'VASO': 'tab:blue'
-    }
-
-
-fig, ax = plt.subplots(figsize=FS)
-
-sns.lineplot(ax=ax,
-    data=tmp,
-    x='layer',
-    y='data',
-    hue='modality',
-    palette=palette,
-    linewidth = LW
-    )
-
-
-plt.ylabel(f'Z-score',
-    fontsize=labelSize
-    )
-
-plt.xlabel('Cortical depth',
-    fontsize = labelSize
-    )
-
-
-ax.set_xticks([1,11],['WM', 'CSF'],
-    fontsize = tickLabelSize
-    )
-
-# Remove ticks for x-axis
-# plt.xticks([])
-
-
-plt.yticks(fontsize = tickLabelSize)
-
-plt.legend(loc = 'upper left',
-    fontsize = legendTextSize
-    )
-
-current_values = plt.gca().get_yticks()
-plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
-
-plt.savefig(f'../results/Group_v1_eventProfiles.png',
-    bbox_inches = 'tight')
-
-plt.show()
-
-
-
-
 ############################################
 ########## Plot event FIRs random ##########
 ############################################
@@ -750,11 +524,11 @@ BOLDcmap = {
     'visiotactile': '#ff7f0e'}
 
 # store as list to loop over
-palettes = [VASOcmap,BOLDcmap]
+palettes = [BOLDcmap,VASOcmap]
 
 
 for j, modality in enumerate(['BOLD', 'VASO']):
-    fig, axes = plt.subplots(1,3, figsize=FS)
+    fig, axes = plt.subplots(1,3, figsize=(10,5))
     fig.subplots_adjust(top=0.8)
 
 
@@ -811,5 +585,234 @@ for j, modality in enumerate(['BOLD', 'VASO']):
         )
 
     plt.suptitle(f'{modality}', fontsize=labelSize, y=0.98)
-    plt.savefig(f'{decoRoot}/FIR_{modality}_layers.png', bbox_inches = "tight")
+    plt.savefig(f'../results/FIR_{modality}_visuotactile.png', bbox_inches = "tight")
+    plt.show()
+
+
+
+
+
+################################################################################
+####################################   S1   ####################################
+################################################################################
+
+
+
+###########################################
+########## Plot block timcourses ##########
+###########################################
+
+data = pd.read_csv('../results/blockTimecourses.csv')
+
+fig, ax = plt.subplots(figsize=FS)
+
+sns.lineplot(ax=ax, data=data.loc[(data['focus']=='s1')], x='x', y='data', hue='modality', palette = palette,linewidth=LW)
+
+
+ax.axvspan(4, 4+(30/TR), color='grey', alpha=0.2, lw=0)
+ax.set_ylabel('Signal change [%]', fontsize=labelSize)
+ax.set_xlabel('Time [s]', fontsize=labelSize)
+ax.legend(loc='lower center', fontsize=tickLabelSize)
+
+values = (np.arange(-4,len(data['x'].unique())-4,4)*TR).round().astype(int)
+spacing = np.arange(0,len(data['x'].unique()),4)
+ax.set_xticks(spacing,values, fontsize=tickLabelSize)
+
+ax.tick_params(axis='y', labelsize=tickLabelSize)
+ax.axhline(0,linestyle='--',color='white')
+plt.savefig('../results/blockTimecourseResults_s1.png',
+    bbox_inches = 'tight')
+plt.show()
+
+
+#########################################
+########## Plot block profiles ##########
+#########################################
+
+# load data
+zscores = pd.read_csv('../results/blocksVsEventsData.csv')
+# Limit plotting to modality, focus and visiotactile stimulation and remove
+# long TR block stimulation for fair comparisons
+tmp = zscores.loc[
+    (zscores['runType']=='blockStim')
+    & (zscores['focus']=='s1')
+    & (zscores['contrast']=='visiotactile')
+    & (zscores['stimType']!='blockStimLongTR')
+    ]
+
+palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:blue'
+    }
+
+
+fig, ax = plt.subplots(figsize=FS)
+
+sns.lineplot(ax=ax,
+    data=tmp,
+    x='layer',
+    y='data',
+    hue='modality',
+    palette=palette,
+    linewidth = LW
+    )
+
+
+plt.ylabel(f'Z-score',
+    fontsize=labelSize
+    )
+
+plt.xlabel('Cortical depth',
+    fontsize = labelSize
+    )
+
+
+ax.set_xticks([1,11],['WM', 'CSF'],
+    fontsize = tickLabelSize
+    )
+
+# Remove ticks for x-axis
+# plt.xticks([])
+
+
+plt.yticks(fontsize = tickLabelSize)
+
+plt.legend(loc = 'upper left',
+    fontsize = legendTextSize
+    )
+
+current_values = plt.gca().get_yticks()
+plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
+
+plt.savefig(f'../results/Group_s1_blockProfiles.png',
+    bbox_inches = 'tight')
+
+plt.show()
+
+
+#####################################
+########## Plot event FIRs ##########
+#####################################
+
+data = pd.read_csv('../results/FIR_results.csv')
+palettesLayers = {'VASO':['#1f77b4','#7dadd9','#c9e5ff'],
+'BOLD':['#ff7f0e', '#ffae6f','#ffdbc2']}
+
+for focus in ['v1','s1']:
+    for i, modality in enumerate(['BOLD', 'VASO']):
+
+        fig, ax = plt.subplots(figsize=FS)
+
+        tmp = data.loc[(data['modality']==modality)&(data['focus']==focus)]
+
+        sns.lineplot(ax=ax, data=tmp , x="volume", y="data", hue='layer',palette=palettesLayers[modality],linewidth=2)
+
+
+        yLimits = ax.get_ylim()
+        ax.set_ylim(-2,9)
+        ax.set_yticks(range(-2,10,2),fontsize=18)
+
+        # prepare x-ticks
+        ticks = range(1,12,2)
+        labels = (np.arange(0,11,2)*1.3).round(decimals=1)
+        for k,label in enumerate(labels):
+            if (label - int(label) == 0):
+                labels[k] = int(label)
+
+        ax.yaxis.set_tick_params(labelsize=tickLabelSize)
+        ax.xaxis.set_tick_params(labelsize=tickLabelSize)
+
+        if i == 0:
+            ax.set_ylabel(r'Signal [$\beta$]', fontsize=labelSize)
+        else:
+            ax.set_ylabel(r'', fontsize=labelSize)
+            ax.set_yticks([])
+
+        ax.legend(loc='upper right',fontsize=tickLabelSize)
+
+        # tweak x-axis
+        ax.set_xticks(ticks)
+        ax.set_xticklabels(labels,
+            fontsize=tickLabelSize)
+        ax.set_xlabel('Time [s]',
+            fontsize=labelSize)
+        ax.set_title(modality, fontsize=36)
+
+        # draw lines
+        ax.axvspan(1, 3/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
+        ax.axhline(0,linestyle='--',color='white')
+
+
+        # ax.axvline((np.arange(0,11)*1.3).round(decimals=1)[3],linestyle='--',color='white')
+
+        plt.savefig(f'../results/groupLevel_{focus}_{modality}_eventResults_withLayers.png', bbox_inches = "tight")
+
+
+        plt.show()
+
+#########################################
+########## Plot event profiles ##########
+#########################################
+
+# load data
+zscores = pd.read_csv('../results/blocksVsEventsData.csv')
+# Limit plotting to modality, focus and visiotactile stimulation and remove
+# long TR block stimulation for fair comparisons
+
+for focus in ['v1','s1']:
+
+    tmp = zscores.loc[
+        (zscores['runType']=='eventStim')
+        & (zscores['focus']==focus)
+        & (zscores['contrast']=='visiotactile')
+        & (zscores['stimType']!='blockStimLongTR')
+        ]
+
+    palette = {
+        'BOLD': 'tab:orange',
+        'VASO': 'tab:blue'
+        }
+
+
+    fig, ax = plt.subplots(figsize=FS)
+
+    sns.lineplot(ax=ax,
+        data=tmp,
+        x='layer',
+        y='data',
+        hue='modality',
+        palette=palette,
+        linewidth = LW
+        )
+
+
+    plt.ylabel(f'Z-score',
+        fontsize=labelSize
+        )
+
+    plt.xlabel('Cortical depth',
+        fontsize = labelSize
+        )
+
+
+    ax.set_xticks([1,11],['WM', 'CSF'],
+        fontsize = tickLabelSize
+        )
+
+    # Remove ticks for x-axis
+    # plt.xticks([])
+
+
+    plt.yticks(fontsize = tickLabelSize)
+
+    plt.legend(loc = 'upper left',
+        fontsize = legendTextSize
+        )
+
+    current_values = plt.gca().get_yticks()
+    plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
+
+    plt.savefig(f'../results/Group_{focus}_eventProfiles.png',
+        bbox_inches = 'tight')
+
     plt.show()
