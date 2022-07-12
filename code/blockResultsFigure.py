@@ -196,6 +196,10 @@ for focus in ['s1', 'v1']:
 
 blockData = pd.DataFrame({'subject': subList,'x':xList, 'data': dataList, 'modality': modalityList, 'trial': trialList, 'run':runList, 'focus':focusList})
 
+
+blockData.to_csv('../results/blockTimecourses.csv', index=False)
+
+
 v1Palette = {
     'BOLD': 'tab:orange',
     'VASO': 'tab:blue'}
@@ -207,7 +211,7 @@ palettes = [v1Palette,s1Palette]
 
 plt.style.use('dark_background')
 
-for focus in ['s1']:
+for focus in ['v1','s1']:
     fig, ax = plt.subplots(figsize=(10,6))
     sns.lineplot(ax=ax,data=blockData.loc[(blockData['focus']==focus)], x='x', y='data', hue='modality', palette = v1Palette, linewidth=2)
 
