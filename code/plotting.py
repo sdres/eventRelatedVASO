@@ -42,6 +42,108 @@ legendTextSize = 18
 
 TR = 1.3
 
+
+
+####################################################
+########## Plot tSNR for short vs long TR ##########
+####################################################
+
+data = pd.read_csv('../results/shortVsLongTRData.csv')
+
+palette = {
+    'blockStimLongTR': '#8DD3C7',
+    'blockStim': '#FFFFB3'}
+
+labels = ['Short TR','Long TR']
+
+# Plotting everything together
+for i, modality in enumerate(['BOLD','VASO']):
+
+    fig, ax = plt.subplots(figsize=(6,6))
+
+    for j, length in enumerate(['blockStim', 'blockStimLongTR']):
+
+        sns.kdeplot(
+            ax=ax,
+            data=data.loc[(data['modality']==modality)&(data['TRlength']==length)],
+            x='tSNR',
+            linewidth=2,
+            color = palette[length],
+            label=labels[j]
+            )
+
+    ax.set_yticks([])
+    ax.set_ylabel('Density',fontsize=20)
+    ax.set_xlim(0,45)
+
+    # adapt x-axis
+    ax.set_xticks([])
+    ax.set_xlabel('')
+    ax.set_xlabel('tSNR',fontsize=20)
+    ax.tick_params(axis='x', labelsize=18)
+    ax.set_xticks(range(0,46,5))
+
+
+    ax.legend(loc='upper right', fontsize=tickLabelSize)
+
+    plt.savefig(f'../results/v1_{modality}_longVsShort.jpg',bbox_inches='tight')
+    plt.show()
+
+
+########################################################
+########## Plot profiles for short vs long TR ##########
+########################################################
+zscores = pd.read_csv('../results/blocksVsEventsData.csv')
+zscores = zscores.loc[(zscores['subject']=='sub-09')|(zscores['subject']=='sub-11')]
+zscores = zscores.loc[(zscores['stimType']=='blockStim')|(zscores['stimType']=='blockStimLongTR')]
+
+for i, modality in enumerate(['BOLD','VASO']):
+    fig, ax = plt.subplots(figsize=FS)
+
+    for j, length in enumerate(['blockStim', 'blockStimLongTR']):
+
+        sns.lineplot(
+            ax=ax,
+            data=zscores.loc[(zscores['modality']==modality)&(zscores['stimType']==length)],
+            x='layer',
+            y='data',
+            ci=False,
+            linewidth=2,
+            color = palette[length],
+            label=labels[j]
+            )
+
+    if modality == 'VASO':
+        ax.set_ylim(0,5)
+    if modality == 'BOLD':
+        ax.set_ylim(0,10)
+
+    plt.ylabel(f'Z-score',
+        fontsize=labelSize
+        )
+
+    plt.xlabel('Cortical depth',
+        fontsize = labelSize
+        )
+
+    ax.set_xticks([1,11],['WM', 'CSF'],
+        fontsize = tickLabelSize
+        )
+
+
+    plt.yticks(fontsize = tickLabelSize)
+
+    plt.legend(loc = 'upper left',
+        fontsize = legendTextSize
+        )
+    plt.title(modality, fontsize=36, pad=20)
+    current_values = plt.gca().get_yticks()
+    plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
+
+    plt.savefig(f'../results/{modality}_profiles_v1longVsShort.jpg',bbox_inches='tight')
+    plt.show()
+
+
 ###########################################
 ########## Plot block timcourses ##########
 ###########################################
