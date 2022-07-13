@@ -40,7 +40,7 @@ TR = 1.3
 ########## Plot event FIRs ##########
 #####################################
 
-data = pd.read_csv('../results/FIR_results.csv')
+data = pd.read_csv('../results/FIRdataRandom.csv')
 
 data = data.loc[]
 # palettesLayers = {'VASO':['#1f77b4','#7dadd9','#c9e5ff'],

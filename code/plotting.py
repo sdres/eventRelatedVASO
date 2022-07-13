@@ -153,7 +153,7 @@ data = pd.read_csv('../results/blockTimecourseResults.csv')
 
 fig, ax = plt.subplots(figsize=FS)
 
-sns.lineplot(ax=ax, data=data.loc[(data['focus']==focus)], x='x', y='data', hue='modality', palette = palette,linewidth=LW)
+sns.lineplot(ax=ax, data=data.loc[(data['focus']=='v1')], x='x', y='data', hue='modality', palette = palette,linewidth=LW)
 
 
 ax.axvspan(4, 4+(30/TR), color='grey', alpha=0.2, lw=0)
@@ -161,7 +161,7 @@ ax.set_ylabel('Signal change [%]', fontsize=labelSize)
 ax.set_xlabel('Time [s]', fontsize=labelSize)
 ax.legend(loc='lower center', fontsize=tickLabelSize)
 
-values = (np.arange(-4,len(data['x'].unique())-4,4)*TR).round().astype(int)
+values = (np.arange(-4,len(data['x'].unique())-4,4)*TR).round(decimals=1)
 spacing = np.arange(0,len(data['x'].unique()),4)
 ax.set_xticks(spacing,values, fontsize=tickLabelSize)
 
@@ -182,7 +182,7 @@ zscores = pd.read_csv('../results/blocksVsEventsData.csv')
 # long TR block stimulation for fair comparisons
 tmp = zscores.loc[
     (zscores['runType']=='blockStim')
-    & (zscores['focus']==focus)
+    & (zscores['focus']=='v1')
     & (zscores['contrast']=='visiotactile')
     & (zscores['stimType']!='blockStimLongTR')
     ]
@@ -221,15 +221,16 @@ ax.set_xticks([1,11],['WM', 'CSF'],
 # Remove ticks for x-axis
 # plt.xticks([])
 
-
-plt.yticks(fontsize = tickLabelSize)
+ticks = np.arange(0,19,3)
+plt.yticks(ticks,fontsize = tickLabelSize)
 
 plt.legend(loc = 'upper left',
     fontsize = legendTextSize
     )
 
-current_values = plt.gca().get_yticks()
-plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
+# current_values = plt.gca().get_yticks()
+# plt.gca().set_yticklabels(['{:02d}'.format(x) for x in current_values])
+
 
 plt.savefig(f'../results/Group_v1_blockProfiles.png',
     bbox_inches = 'tight')
@@ -307,7 +308,7 @@ zscores = pd.read_csv('../results/blocksVsEventsData.csv')
 # long TR block stimulation for fair comparisons
 tmp = zscores.loc[
     (zscores['runType']=='eventStim')
-    & (zscores['focus']==focus)
+    & (zscores['focus']=='v1')
     & (zscores['contrast']=='visiotactile')
     & (zscores['stimType']!='blockStimLongTR')
     ]
@@ -346,15 +347,13 @@ ax.set_xticks([1,11],['WM', 'CSF'],
 # Remove ticks for x-axis
 # plt.xticks([])
 
-
-plt.yticks(fontsize = tickLabelSize)
+ticks = np.arange(0,13,2)
+plt.yticks(ticks,fontsize = tickLabelSize)
 
 plt.legend(loc = 'upper left',
     fontsize = legendTextSize
     )
 
-current_values = plt.gca().get_yticks()
-plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
 
 plt.savefig(f'../results/Group_v1_eventProfiles.png',
     bbox_inches = 'tight')
@@ -390,7 +389,7 @@ for modality, cmap in zip(['VASO', 'BOLD'], palettes):
     # long TR block stimulation for fair comparisons
     tmp = zscores.loc[
         (zscores['modality']==modality)
-        & (zscores['focus']==focus)
+        & (zscores['focus']=='v1')
         & (zscores['contrast']=='visiotactile')
         & (zscores['stimType']!='blockStimLongTR')
         ]
@@ -426,17 +425,17 @@ for modality, cmap in zip(['VASO', 'BOLD'], palettes):
 
     # Set y-limits for modalities
     if modality == 'VASO':
-        ax.set_ylim(0,6)
+        ticks = np.arange(0,7,1)
+        plt.yticks(ticks,fontsize = tickLabelSize)
     if modality == 'BOLD':
-        ax.set_ylim(0,18)
+        ticks = np.arange(0,19,3)
+        plt.yticks(ticks,fontsize = tickLabelSize)
 
 
     plt.legend(loc = 'upper left',
         fontsize = legendTextSize
         )
 
-    current_values = plt.gca().get_yticks()
-    plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
 
     plt.savefig(f'../results/Group_v1_{modality}_blocksVsEvents.png',
         bbox_inches = 'tight')
@@ -614,7 +613,7 @@ ax.set_ylabel('Signal change [%]', fontsize=labelSize)
 ax.set_xlabel('Time [s]', fontsize=labelSize)
 ax.legend(loc='lower center', fontsize=tickLabelSize)
 
-values = (np.arange(-4,len(data['x'].unique())-4,4)*TR).round().astype(int)
+values = (np.arange(-4,len(data['x'].unique())-4,4)*TR).round(decimals=1)
 spacing = np.arange(0,len(data['x'].unique()),4)
 ax.set_xticks(spacing,values, fontsize=tickLabelSize)
 
@@ -674,15 +673,12 @@ ax.set_xticks([1,11],['WM', 'CSF'],
 # Remove ticks for x-axis
 # plt.xticks([])
 
-
-plt.yticks(fontsize = tickLabelSize)
+ticks = np.arange(0,11,2)
+plt.yticks(ticks, fontsize = tickLabelSize)
 
 plt.legend(loc = 'upper left',
     fontsize = legendTextSize
     )
-
-current_values = plt.gca().get_yticks()
-plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
 
 plt.savefig(f'../results/Group_s1_blockProfiles.png',
     bbox_inches = 'tight')
@@ -759,7 +755,7 @@ zscores = pd.read_csv('../results/blocksVsEventsData.csv')
 # Limit plotting to modality, focus and visiotactile stimulation and remove
 # long TR block stimulation for fair comparisons
 
-for focus in ['v1','s1']:
+for focus in ['s1']:
 
     tmp = zscores.loc[
         (zscores['runType']=='eventStim')
@@ -802,15 +798,13 @@ for focus in ['v1','s1']:
     # Remove ticks for x-axis
     # plt.xticks([])
 
-
-    plt.yticks(fontsize = tickLabelSize)
+    ticks = np.arange(0,11,2)
+    plt.yticks(ticks,fontsize = tickLabelSize)
 
     plt.legend(loc = 'upper left',
         fontsize = legendTextSize
         )
 
-    current_values = plt.gca().get_yticks()
-    plt.gca().set_yticklabels(['{:02d}'.format(int(x)) for x in current_values])
 
     plt.savefig(f'../results/Group_{focus}_eventProfiles.png',
         bbox_inches = 'tight')
