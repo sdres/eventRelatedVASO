@@ -569,10 +569,6 @@ plt.savefig(f'../results/Group_v1_stabilizing.png',
 plt.show()
 
 
-
-
-
-
 ############################################
 ########## Plot event FIRs random ##########
 ############################################
