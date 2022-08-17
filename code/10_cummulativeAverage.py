@@ -171,7 +171,7 @@ np.save('../data/trialWiseResponses.npy',  eventResults)
 type(eventResults)
 
 eventResults2 = np.load('../data/trialWiseResponses.npy',allow_pickle=True).item()
-
+eventResults = eventResults2
 type(eventResults2)
 
 subList = []
@@ -512,32 +512,31 @@ for focus in ['v1']:
     plt.show()
 
 # find 5% difference point
+for modality in ['BOLD','VASO']:
+    tmp = efficiencyData.loc[(efficiencyData['focus']=='v1')&(efficiencyData['modality']==modality)]
 
-#first for VASO in v1
-tmp = efficiencyData.loc[(efficiencyData['focus']=='v1')&(efficiencyData['modality']=='VASO')]
-
-firstTP = tmp['nrTrials'].unique()[0]
-firstTPVal = np.mean(tmp.loc[tmp['nrTrials']==firstTP]['score'])
-lastTP = tmp['nrTrials'].unique()[-1]
-lastTPVal = np.mean(tmp.loc[tmp['nrTrials']==lastTP]['score'])
-
-
-maxDiff = firstTPVal-lastTPVal
-percent = maxDiff/100
-thr = (percent*5)+lastTPVal
-thrLib = (percent*10)+lastTPVal
-critLib = 0
-for timePoint in tmp['nrTrials'].unique():
-    val = np.mean(tmp.loc[tmp['nrTrials']==timePoint]['score'])
-    if val <= thrLib:
-        if critLib == 0:
-            critLib = timePoint
-            print(f'liberal critereon reached after trial {timePoint}')
+    firstTP = tmp['nrTrials'].unique()[0]
+    firstTPVal = np.mean(tmp.loc[tmp['nrTrials']==firstTP]['score'])
+    lastTP = tmp['nrTrials'].unique()[-1]
+    lastTPVal = np.mean(tmp.loc[tmp['nrTrials']==lastTP]['score'])
 
 
-    if val <= thr:
-        print(f'critereon reached after trial {timePoint}')
-        break
+    maxDiff = firstTPVal-lastTPVal
+    percent = maxDiff/100
+    thr = (percent*5)+lastTPVal
+    thrLib = (percent*10)+lastTPVal
+    critLib = 0
+    for timePoint in tmp['nrTrials'].unique():
+        val = np.mean(tmp.loc[tmp['nrTrials']==timePoint]['score'])
+        if val <= thrLib:
+            if critLib == 0:
+                critLib = timePoint
+                print(f'liberal critereon reached after trial {timePoint}')
+
+
+        if val <= thr:
+            print(f'{modality} critereon reached after trial {timePoint}')
+            break
 
 
 for focus in ['v1']:
