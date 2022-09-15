@@ -237,6 +237,61 @@ plt.savefig(f'../results/Group_v1_blockProfiles.png',
 
 plt.show()
 
+####################################################
+########## Plot event FIRs without layers ##########
+####################################################
+
+data = pd.read_csv('../results/FIR_results.csv')
+
+palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:blue'
+    }
+
+fig, ax = plt.subplots(figsize=FS)
+
+tmp = data.loc[(data['focus']=='v1')]
+
+sns.lineplot(ax=ax, data=tmp , x="volume", y="data", hue='modality', palette=palette, linewidth=2)
+
+
+yLimits = ax.get_ylim()
+# ax.set_ylim(-1,7)
+ax.set_yticks(range(-1,7),fontsize=18)
+
+# prepare x-ticks
+ticks = range(1,12,2)
+labels = (np.arange(0,11,2)*1.3).round(decimals=1)
+for k,label in enumerate(labels):
+    if (label - int(label) == 0):
+        labels[k] = int(label)
+
+ax.yaxis.set_tick_params(labelsize=tickLabelSize)
+ax.xaxis.set_tick_params(labelsize=tickLabelSize)
+
+ax.set_ylabel(r'Signal [$\beta$]', fontsize=labelSize)
+
+
+ax.legend(loc='upper right',fontsize=tickLabelSize)
+
+# tweak x-axis
+ax.set_xticks(ticks)
+ax.set_xticklabels(labels,
+    fontsize=tickLabelSize)
+ax.set_xlabel('Time [s]',
+    fontsize=labelSize)
+# draw lines
+ax.axvspan(1, 3/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
+ax.axhline(0,linestyle='--',color='white')
+
+
+# ax.axvline((np.arange(0,11)*1.3).round(decimals=1)[3],linestyle='--',color='white')
+
+plt.savefig(f'../results/groupLevel_v1_eventResults_withoutLayers.png', bbox_inches = "tight")
+
+
+plt.show()
+
 
 #####################################
 ########## Plot event FIRs ##########
@@ -516,7 +571,7 @@ for modality, cmap in zip(['VASO', 'BOLD'], palettes):
 ##########################################
 
 
-data = pd.read_csv('../results/efficiencyData.csv')
+data = pd.read_csv('/Users/sebastiandresbach/git/eventRelatedVASO/results/efficiencyData.csv')
 data = data.loc[(data['focus']=='v1')]
 
 palette = {
@@ -567,6 +622,219 @@ plt.savefig(f'../results/Group_v1_stabilizing.png',
     bbox_inches = 'tight')
 
 plt.show()
+
+
+
+#########################################
+########## Plot efficiency gif ##########
+#########################################
+
+
+data = np.load('/Users/sebastiandresbach/git/eventRelatedVASO/data/trialWiseResponses.npy',allow_pickle=True).item()
+
+from random import seed
+from random import choice
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import nibabel as nb
+import numpy as np
+import imageio
+import scipy
+from scipy import ndimage
+import os
+
+
+tmpBOLD = data.loc[(data['nrTrials']==1)& (data['subject']=='sub-07')& (data['run'].str.contains('run-001')) & (data['modality'] == 'BOLD')]
+plt.plot(tmpBOLD['currentAverage'].to_numpy())
+type(tmpBOLD['currentAverage'].to_numpy()[0])
+
+tmpBOLD['currentAverage']
+
+folder = '/Users/sebastiandresbach/git/eventRelatedVASO/results/tmp'
+os.system(f'mkdir {folder}')
+
+seed(5)
+palette = {
+    'BOLD': 'tab:orange',
+    'VASO': 'tab:blue'
+}
+for sub in ['sub-07']:
+    print(sub)
+
+    # make list of all trials (some where excluded ue to motion)
+    subTrials = []
+    for key, value in data['v1'][sub][f'{sub}_ses-001_task-eventStim_run-001']['BOLD']['visiotactile']['layer 1'].items():
+        subTrials.append(key)
+
+    # initiate list to dump trials that were already included
+    includedTrials = []
+    # choose 40 random trials
+    for n in range(40):
+        # make a figure for each number of trials
+        fig = plt.figure()
+
+        # choose a random trial
+        selection = choice(subTrials)
+        # remove that trial from the list of possible trials
+        subTrials.remove(selection)
+        # add trialname to list of trials that were already included
+        includedTrials.append(selection)
+
+        # get VASO and BOLD responses of first included trial
+        tmpBOLD = data['v1'][sub][f'{sub}_ses-001_task-eventStim_run-001']['BOLD']['visiotactile']['layer 1'][includedTrials[0]]
+        tmpVASO = data['v1'][sub][f'{sub}_ses-001_task-eventStim_run-001']['VASO']['visiotactile']['layer 1'][includedTrials[0]]
+
+        for layer in range(2,4):
+            tmpBOLD = np.vstack((tmpBOLD, data['v1'][sub][f'{sub}_ses-001_task-eventStim_run-001']['BOLD']['visiotactile'][f'layer {layer}'][includedTrials[0]]))
+            tmpVASO = np.vstack((tmpVASO, data['v1'][sub][f'{sub}_ses-001_task-eventStim_run-001']['VASO']['visiotactile'][f'layer {layer}'][includedTrials[0]]))
+
+        for trial in range(0,len(includedTrials)):
+            for layer in range(2,4):
+                tmpBOLD = np.vstack((tmpBOLD, data['v1'][sub][f'{sub}_ses-001_task-eventStim_run-001']['BOLD']['visiotactile'][f'layer {layer}'][includedTrials[trial]]))
+                tmpVASO = np.vstack((tmpVASO, data['v1'][sub][f'{sub}_ses-001_task-eventStim_run-001']['VASO']['visiotactile'][f'layer {layer}'][includedTrials[trial]]))
+
+        tmpVASO = np.mean(tmpVASO, axis=0)
+        tmpBOLD = np.mean(tmpBOLD, axis=0)
+
+        plt.plot(tmpBOLD, label='_nolegend_', color='tab:orange')
+        plt.plot(-tmpVASO, label='_nolegend_', color='tab:blue')
+
+        plt.ylabel('% signal change', fontsize=24)
+        plt.xlabel('Time (s)', fontsize=24)
+
+
+        ticks = range(0,14)
+        labels = (np.arange(-4,10)*1.3).round(decimals=1)
+
+        plt.xticks(ticks,labels,rotation=45)
+
+
+        sns.lineplot(data=layerEventData, x='x', y='data', hue='modality', alpha=0.3, ci=None,palette=palette)
+
+        plt.axvspan(4, 4+(2/1.3), color='grey', alpha=0.2, lw=0, label = 'stimulation')
+
+        plt.xticks(fontsize=18)
+        plt.yticks(fontsize=18)
+#         plt.xlabel('TR')
+        plt.ylim(-2,2.5)
+        plt.title(f"Average of {n+1} trials", fontsize=24, pad=20)
+        plt.legend(loc='upper left',fontsize=12)
+        plt.rcParams['savefig.facecolor']='black'
+
+        plt.savefig(f'{folder}/{sub}_eventRelatedAveragesOf{str(n+1).zfill(2)}Trials.png', bbox_inches='tight')
+        plt.show()
+
+import glob
+# make gif image
+import imageio
+images = []
+imgs = sorted(glob.glob(f'{folder}/{sub}_eventRelatedAveragesOf*'))
+
+for file in imgs:
+    images.append(imageio.imread(file))
+imageio.mimsave(f'{folder}/movie.gif', images, duration=0.5)
+
+
+runData = pd.read_csv('/Users/sebastiandresbach/git/eventRelatedVASO/results/efficiencyData.csv')
+
+
+subList = []
+dataList = []
+xList = []
+modalityList = []
+trialList = []
+runList = []
+layerList = []
+conditionList = []
+
+layers = {'1':'deep','2':'middle','3':'superficial'}
+
+subs = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
+modalities = ['BOLD', 'VASO']
+
+for focus, cmap in zip(['v1'],['tab10']):
+    for sub in subs:
+        print(sub)
+
+        subRuns = tmp.loc[tmp['subject']==sub]
+        runs = sorted(subRuns['run'].unique())
+
+        # runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*_run-00*_cbv.nii.gz'))
+
+        for run in runs:
+
+            base = os.path.basename(run).rsplit('.', 2)[0]
+            print(base)
+
+
+            for modality in modalities:
+                print(modality)
+
+                if 'Random' in base:
+                    for trialType in ['visual', 'visiotactile']:
+
+
+                        for j in range(1, 4):
+
+                            subTrials = []
+                            for key, value in data[focus][sub][base][modality][trialType][f'layer {j}'].items():
+                                subTrials.append(key)
+
+                            for trial in subTrials[:-1]:
+
+                                for n in range(len(data[focus][sub][base][modality][trialType][f'layer {j}'][trial][0])):
+
+                                    if modality == "BOLD":
+                                        dataList.append(data[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+
+                                    if modality == "VASO":
+                                        dataList.append(-data[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+
+                                    modalityList.append(modality)
+                                    trialList.append(trial)
+                                    runList.append(base)
+                                    xList.append(n)
+                                    subList.append(sub)
+                                    layerList.append(layers[str(j)])
+                                    conditionList.append(trialType)
+                else:
+                    trialType = 'visiotactile'
+
+
+                    for j in range(1, 4):
+
+                        subTrials = []
+                        for key, value in data[focus][sub][base][modality][trialType][f'layer {j}'].items():
+                            subTrials.append(key)
+
+                        for trial in subTrials[:-1]:
+
+                            for n in range(len(data[focus][sub][base][modality][trialType][f'layer {j}'][trial][0])):
+
+                                if modality == "BOLD":
+                                    dataList.append(data[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+
+                                if modality == "VASO":
+                                    dataList.append(-data[focus][sub][base][modality][trialType][f'layer {j}'][trial][0][n])
+
+                                modalityList.append(modality)
+                                trialList.append(trial)
+                                runList.append(base)
+                                xList.append(n)
+                                subList.append(sub)
+                                layerList.append(layers[str(j)])
+                                conditionList.append(trialType)
+
+
+layerEventData = pd.DataFrame({'subject': subList,'x':xList, 'data': dataList, 'modality': modalityList, 'trial': trialList, 'run':runList, 'layer':layerList, 'condition':conditionList})
+
+layerEventData.to_csv('/Users/sebastiandresbach/git/eventRelatedVASO/results/layerEventData.csv')
+
+
+
+
+
 
 
 ############################################
