@@ -53,111 +53,111 @@ for sub in ['sub-09']:
 
                 subprocess.call(command, shell=True)
 
-            # nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
-            # header = nii.header
-            # affine = nii.affine
-            # data = nii.get_fdata()
-            #
-            # NumVol_notnulled = data.shape[-1]
-            # print(f'notnulled timepoints: {NumVol_notnulled}')
-            #
-            # nii = nb.load(f'{outFolder}/{base}_nulled_intemp.nii')
-            # header = nii.header
-            # affine = nii.affine
-            # data = nii.get_fdata()
-            #
-            # NumVol_nulled = data.shape[-1]
-            # print(f'nulled timepoints: {NumVol_nulled}')
-            #
-            #
-            # if NumVol_nulled < NumVol_notnulled:
-            #     newNrVols = NumVol_nulled-1
-            # if NumVol_nulled >= NumVol_notnulled:
-            #     newNrVols = NumVol_notnulled-2
-            #
-            # # make new nulled data
-            # nii = nb.load(f'{outFolder}/{base}_nulled_intemp.nii')
-            # header = nii.header
-            # affine = nii.affine
-            # data = nii.get_fdata()
-            #
-            # newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],data.shape[3]))
-            # for i in range(data.shape[3]):
-            #     if i == 0:
-            #         newData[:,:,:,i]=data[:,:,:,i]
-            #     else:
-            #         newData[:,:,:,i]=data[:,:,:,i-1]
-            # img = nb.Nifti1Image(newData, header=header, affine=affine)
-            # nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
-            #
-            #
-            #
-            # # make new notnulled data
-            # nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
-            # header = nii.header
-            # affine = nii.affine
-            # data = nii.get_fdata()
-            #
-            # newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],data.shape[3]))
-            # for i in range(data.shape[3]):
-            #     newData[:,:,:,i]=data[:,:,:,i]
-            # img = nb.Nifti1Image(newData, header=header, affine=affine)
-            # nb.save(img, f'{outFolder}/{base}_notnulled_intemp.nii')
+            nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
+            header = nii.header
+            affine = nii.affine
+            data = nii.get_fdata()
+
+            NumVol_notnulled = data.shape[-1]
+            print(f'notnulled timepoints: {NumVol_notnulled}')
+
+            nii = nb.load(f'{outFolder}/{base}_nulled_intemp.nii')
+            header = nii.header
+            affine = nii.affine
+            data = nii.get_fdata()
+
+            NumVol_nulled = data.shape[-1]
+            print(f'nulled timepoints: {NumVol_nulled}')
 
 
-            # if NumVol_nulled <= NumVol_notnulled:
-            #     print('nulled has less volumes')
-            #     newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_nulled))
-            #     for i in range(NumVol_nulled):
-            #         if i == 0:
-            #             newData[:,:,:,i]=data[:,:,:,i]
-            #         else:
-            #             newData[:,:,:,i]=data[:,:,:,i-1]
-            #
-            #     # Prepare header with new nr of volumes
-            #     newHead = header.copy()
-            #     newHead['dim'][4]=NumVol_nulled
-            #
-            #
-            #     img = nb.Nifti1Image(newData, header=newHead, affine=affine)
-            #     nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
-            #
-            #
-            #     nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
-            #     header = nii.header
-            #     affine = nii.affine
-            #     data = nii.get_fdata()
-            #
-            #     newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_nulled))
-            #     for i in range(NumVol_nulled):
-            #         if i == 0:
-            #             newData[:,:,:,i]=data[:,:,:,i]
-            #         else:
-            #             newData[:,:,:,i]=data[:,:,:,i-1]
-            #
-            #     # Prepare header with new nr of volumes
-            #     newHead = header.copy()
-            #     newHead['dim'][4]=NumVol_nulled
-            #
-            #
-            #     img = nb.Nifti1Image(newData, header=newHead, affine=affine)
-            #     nb.save(img, f'{outFolder}/{base}_notnulled_intemp.nii')
-            #
-            #
-            # else:
-            #     print('notnulled has less volumes')
-            #     newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_notnulled))
-            #     for i in range(NumVol_notnulled):
-            #         if i == 0:
-            #             newData[:,:,:,i]=data[:,:,:,i]
-            #         else:
-            #             newData[:,:,:,i]=data[:,:,:,i-1]
-            #     # Prepare header with new nr of volumes
-            #     newHead = header.copy()
-            #     newHead['dim'][4]=NumVol_notnulled
-            #
-            #     img = nb.Nifti1Image(newData, header=newHead, affine=affine)
-            #     nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
+            if NumVol_nulled < NumVol_notnulled:
+                newNrVols = NumVol_nulled-1
+            if NumVol_nulled >= NumVol_notnulled:
+                newNrVols = NumVol_notnulled-2
+
+            # make new nulled data
+            nii = nb.load(f'{outFolder}/{base}_nulled_intemp.nii')
+            header = nii.header
+            affine = nii.affine
+            data = nii.get_fdata()
+
+            newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],data.shape[3]))
+            for i in range(data.shape[3]):
+                if i == 0:
+                    newData[:,:,:,i]=data[:,:,:,i]
+                else:
+                    newData[:,:,:,i]=data[:,:,:,i-1]
+            img = nb.Nifti1Image(newData, header=header, affine=affine)
+            nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
+
+
+
+            # make new notnulled data
+            nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
+            header = nii.header
+            affine = nii.affine
+            data = nii.get_fdata()
+
+            newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],data.shape[3]))
+            for i in range(data.shape[3]):
+                newData[:,:,:,i]=data[:,:,:,i]
+            img = nb.Nifti1Image(newData, header=header, affine=affine)
+            nb.save(img, f'{outFolder}/{base}_notnulled_intemp.nii')
+
+
+            if NumVol_nulled <= NumVol_notnulled:
+                print('nulled has less volumes')
+                newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_nulled))
+                for i in range(NumVol_nulled):
+                    if i == 0:
+                        newData[:,:,:,i]=data[:,:,:,i]
+                    else:
+                        newData[:,:,:,i]=data[:,:,:,i-1]
+
+                # Prepare header with new nr of volumes
+                newHead = header.copy()
+                newHead['dim'][4]=NumVol_nulled
+
+
+                img = nb.Nifti1Image(newData, header=newHead, affine=affine)
+                nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
+
+
+                nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
+                header = nii.header
+                affine = nii.affine
+                data = nii.get_fdata()
+
+                newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_nulled))
+                for i in range(NumVol_nulled):
+                    if i == 0:
+                        newData[:,:,:,i]=data[:,:,:,i]
+                    else:
+                        newData[:,:,:,i]=data[:,:,:,i-1]
+
+                # Prepare header with new nr of volumes
+                newHead = header.copy()
+                newHead['dim'][4]=NumVol_nulled
+
+
+                img = nb.Nifti1Image(newData, header=newHead, affine=affine)
+                nb.save(img, f'{outFolder}/{base}_notnulled_intemp.nii')
+
+
+            else:
+                print('notnulled has less volumes')
+                newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_notnulled))
+                for i in range(NumVol_notnulled):
+                    if i == 0:
+                        newData[:,:,:,i]=data[:,:,:,i]
+                    else:
+                        newData[:,:,:,i]=data[:,:,:,i-1]
+                # Prepare header with new nr of volumes
+                newHead = header.copy()
+                newHead['dim'][4]=NumVol_notnulled
+
+                img = nb.Nifti1Image(newData, header=newHead, affine=affine)
+                nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
 
 
             print('correcting TR in header and calculating mean image')

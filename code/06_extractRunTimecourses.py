@@ -7,9 +7,9 @@ import seaborn as sns
 from scipy.interpolate import interp1d
 import os
 
-subs = ['sub-13']
+subs = ['sub-05']
 ses = 'ses-001'
-root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
+root = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 modalities = ['BOLD', 'VASO']
 
@@ -48,7 +48,7 @@ for focus in ['v1']:
 
             runs = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_{ses}_task-event*_run-00*_cbv.nii.gz'))
 
-            for run in runs:
+            for run in runs[1:]:
                 if 'Long' in run:
                     continue
 
@@ -57,7 +57,7 @@ for focus in ['v1']:
 
                 for modality in modalities:
 
-                    print(f'processing {base}')
+                    print(f'processing {base} {modality}')
 
                     run = f'{outFolder}/{base}_{focus}_{modality}.nii.gz'
 
@@ -82,25 +82,28 @@ for focus in ['v1']:
 
                         layerRoi = mask == j
 
+                        print(data.shape)
+                        print(layerRoi.shape)
+
 
                         mask_mean = np.mean(data[layerRoi],axis=0)[0]
                         df = pd.DataFrame({'signal':mask_mean})
-                        df.to_csv(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_layer{j:02d}.csv', index=False)
+                        df.to_csv(f'{root}/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_layer{j:02d}.csv', index=False)
 
                         for i, tp in enumerate(mask_mean):
                             layerTS[j-1,0,0,i] = tp
 
                     nii = nb.Nifti1Image(layerTS, header = header, affine = affine)
-                    nb.save(nii, f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_layers_ts.nii')
+                    nb.save(nii, f'{root}/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_layers_ts.nii')
 
 
                     mask_mean = np.mean(data[idxMask],axis=0)[0]
                     df = pd.DataFrame({'signal':mask_mean})
-                    df.to_csv(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{base}_{focus}_{modality}.csv', index=False)
+                    df.to_csv(f'{root}/derivatives/{sub}/{ses}/{base}_{focus}_{modality}.csv', index=False)
 
                     mask_mean = mask_mean.reshape((1,1,1,mask_mean.shape[-1]))
                     nii = nb.Nifti1Image(mask_mean, header = header, affine = affine)
-                    nb.save(nii, f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_ts.nii')
+                    nb.save(nii, f'{root}/derivatives/{sub}/{ses}/{base}_{focus}_{modality}_ts.nii')
 
 
 
@@ -176,19 +179,19 @@ for focus in ['']:
 
                         mask_mean = np.mean(data[layerRoi],axis=0)[0]
                         # df = pd.DataFrame({'signal':mask_mean})
-                        # df.to_csv(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/ses-001/{base}_{modality}_layer{j:02d}.csv', index=False)
+                        # df.to_csv(f'{root}/derivatives/{sub}/ses-001/{base}_{modality}_layer{j:02d}.csv', index=False)
 
                         for i, tp in enumerate(mask_mean):
                             vesselTS[0,0,0,i] = tp
 
                     nii = nb.Nifti1Image(vesselTS, header = header, affine = affine)
-                    nb.save(nii, f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}/{base}_{modality}_vessel_ts.nii')
+                    nb.save(nii, f'{root}/derivatives/{sub}/{ses}/{base}_{modality}_vessel_ts.nii')
 
                     #
                     # mask_mean = np.mean(data[idxMask],axis=0)[0]
                     # df = pd.DataFrame({'signal':mask_mean})
-                    # df.to_csv(f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/ses-001/{base}_{modality}.csv', index=False)
+                    # df.to_csv(f'{root}/derivatives/{sub}/ses-001/{base}_{modality}.csv', index=False)
                     #
                     # mask_mean = mask_mean.reshape((1,1,1,mask_mean.shape[-1]))
                     # nii = nb.Nifti1Image(mask_mean, header = header, affine = affine)
-                    # nb.save(nii, f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/ses-001/{base}_{modality}_ts.nii')
+                    # nb.save(nii, f'{root}/derivatives/{sub}/ses-001/{base}_{modality}_ts.nii')

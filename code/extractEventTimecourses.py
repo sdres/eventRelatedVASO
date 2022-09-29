@@ -8,9 +8,9 @@ from scipy.interpolate import interp1d
 import os
 from matplotlib.ticker import FormatStrFormatter
 
-subs = ['sub-12']
+subs = ['sub-05']
 ses = 'ses-001'
-root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
+root = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 modalities = ['BOLD', 'VASO']
 
@@ -40,14 +40,14 @@ for focus in ['v1']:
 
 
         for ses in sessions:
-            outFolder = f'{root}/derivatives/{sub}/{ses}/upsampledFunctional'
+            outFolder = f'{root}/derivatives/{sub}/{ses}/old/upsampledFunctional'
 
             if sub == 'sub-09' and focus == 's1Focus' and ses=='ses-002':
                 continue
 
             runs = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_{ses}_task-eventSti*_run-00*_cbv.nii.gz'))
 
-            for run in runs:
+            for run in runs[1:]:
                 if 'Long' in run:
                     continue
 
@@ -180,7 +180,7 @@ for focus, cmap in zip(['v1'],['tab10']):
 
         runs = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*_run-00*_cbv.nii.gz'))
 
-        for run in runs:
+        for run in runs[1:]:
 
             base = os.path.basename(run).rsplit('.', 2)[0][:-4]
             print(base)
@@ -249,7 +249,15 @@ layerEventData = pd.DataFrame({'subject': subList,'x':xList, 'data': dataList, '
 
 layerEventData
 
-sns.lineplot(data=layerEventData, x="x", y="data", hue='modality')
+for modality in modalities:
+    sns.lineplot(data=layerEventData.loc[layerEventData['modality']==modality], x="x", y="data", hue='layer')
+    plt.title(modality)
+    plt.show()
+
+for modality in modalities:
+    sns.lineplot(data=layerEventData.loc[layerEventData['modality']==modality], x="x", y="data", hue='layer')
+    plt.title(modality)
+    plt.show()
 
 ############################
 ### plot individual runs ###

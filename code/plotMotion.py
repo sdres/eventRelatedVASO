@@ -9,6 +9,7 @@ plt.style.use('dark_background')
 v1Palette = {
     'notnulled': 'tab:orange',
     'nulled': 'tab:blue'}
+
 for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-10', 'sub-11','sub-12', 'sub-13', 'sub-14']:
 # for sub in ['sub-05']:
 
@@ -63,8 +64,8 @@ for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-10', 'sub-11','s
 
         axes[0].set_xlabel("Volume", fontsize=24)
 
-        sns.lineplot(ax=axes[1], x='Time/TR',y='Motion',data=motionData_rot_nulled,hue='Motion_Name', palette = 'Set1',linewidth = width)
-        sns.lineplot(ax=axes[1], x='Time/TR',y='Motion',data=motionData_rot_notnulled,hue='Motion_Name', palette = 'Set2',linewidth = width)
+        sns.lineplot(ax=axes[1], x='Time/TR', y='Motion',data=motionData_rot_nulled,hue='Motion_Name', palette = 'Set1',linewidth = width)
+        sns.lineplot(ax=axes[1], x='Time/TR', y='Motion',data=motionData_rot_notnulled,hue='Motion_Name', palette = 'Set2',linewidth = width)
 
 
         # mylabels = ['X VASO','Y VASO','Z VASO','X BOLD','Y BOLD','Z BOLD']

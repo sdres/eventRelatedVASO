@@ -5,7 +5,7 @@ import glob
 import os
 
 
-root = f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
+root = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 for sub in ['sub-05']:
 
@@ -22,30 +22,30 @@ for sub in ['sub-05']:
 
 
 
-for sub in ['sub-12']:
+for sub in ['sub-05']:
     ses = 'ses-001'
     dataFolder = f'{root}/derivatives/{sub}/{ses}'
 
     runs = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_{ses}_task-*run-00*_cbv.nii.gz'))
 
-    # for run in runs:
-    #     base = os.path.basename(run).rsplit('.', 2)[0][:-4]
-    #     print(f'Processing run {base}')
-    #
-    #     # Get dims
-    #     dataFile = f'{dataFolder}/{base}_T1w_N4Corrected.nii'
-    #     dataNii = nb.load(dataFile)
-    #     header = dataNii.header
-    #     data = dataNii.get_fdata()
-    #
-    #     dims = header.get_zooms()
-    #
-    #     xdim = dims[0]
-    #     ydim = dims[1]
-    #     zdim = dims[2]
-    #
-    #     for modality in ['VASO', 'BOLD']:
-    #         subprocess.run(f'/home/sebastian/abin/3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {dataFolder}/{base}_{modality}.feat/stats/zstat1_scaled.nii.gz -input {dataFolder}/{base}_{modality}.feat/stats/zstat1.nii.gz',shell=True)
+    for run in runs:
+        base = os.path.basename(run).rsplit('.', 2)[0][:-4]
+        print(f'Processing run {base}')
+
+        # Get dims
+        dataFile = f'{dataFolder}/{base}_T1w_N4Corrected.nii'
+        dataNii = nb.load(dataFile)
+        header = dataNii.header
+        data = dataNii.get_fdata()
+
+        dims = header.get_zooms()
+
+        xdim = dims[0]
+        ydim = dims[1]
+        zdim = dims[2]
+
+        for modality in ['VASO', 'BOLD']:
+            subprocess.run(f'/home/sebastian/abin/3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {dataFolder}/{base}_{modality}.feat/stats/zstat1_scaled.nii.gz -input {dataFolder}/{base}_{modality}.feat/stats/zstat1.nii.gz',shell=True)
 
     for stimType in ['blockStim', 'eventStimRandom']:
     # for stimType in ['blockStim', 'eventStim']:
@@ -74,13 +74,13 @@ for sub in ['sub-12']:
 
             try:
                 for i in range(1,5):
-                    subprocess.run(f'/home/sebastian/abin/3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope{i}.feat/stats/zstat1_scaled.nii.gz -input {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope{i}.feat/stats/zstat1.nii.gz',shell=True)
+                    subprocess.run(f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope{i}.feat/stats/zstat1_scaled.nii.gz -input {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope{i}.feat/stats/zstat1.nii.gz',shell=True)
             except:
-                subprocess.run(f'/home/sebastian/abin/3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope1.feat/stats/zstat1_scaled.nii.gz -input {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope1.feat/stats/zstat1.nii.gz',shell=True)
+                subprocess.run(f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope1.feat/stats/zstat1_scaled.nii.gz -input {dataFolder}/{sub}_{ses}_task-{stimType}_secondLevel_{modality}.gfeat/cope1.feat/stats/zstat1.nii.gz',shell=True)
 
 
 
-for sub in ['sub-11']:
+for sub in ['sub-05']:
     ses='ses-001'
 
     runs = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_{ses}_task-*run-00*_cbv.nii.gz'))
@@ -90,7 +90,7 @@ for sub in ['sub-11']:
 
     subprocess.run(f'mkdir {outFolder}', shell=True)
 
-    for focus in ['v1', 's1']:
+    for focus in ['v1']:
 
         if sub == 'sub-07':
             try:
@@ -143,6 +143,8 @@ for sub in ['sub-11']:
             print(f'Processing run {base}')
 
             for modality in ['VASO', 'BOLD']:
+                print(f'Processing run {base} {modality}')
+
                 dataFile = f'{dataFolder}/{base}_{modality}.nii.gz'
                 dataNii = nb.load(dataFile)
                 header = dataNii.header
@@ -154,7 +156,7 @@ for sub in ['sub-11']:
                 ydim = dims[1]
                 zdim = dims[2]
 
-                subprocess.run(f'/home/sebastian/abin/3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_{focus}_{modality}.nii.gz -input {outFolder}/{base}_{focus}_{modality}.nii.gz',shell=True)
+                subprocess.run(f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_{focus}_{modality}.nii.gz -input {outFolder}/{base}_{focus}_{modality}.nii.gz',shell=True)
 
 
 ## upsample QA
