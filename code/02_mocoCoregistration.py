@@ -25,8 +25,8 @@ from computeT1w import *
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 # Set subjects to work on
-SUBS = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
-SUBS = ['sub-05']
+SUBS = ['sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
+SUBS = ['sub-07']
 # SUBS = ['sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
 
 for sub in SUBS:
@@ -186,27 +186,48 @@ for sub in SUBS:
 
         # Collectall runs within session (containing both nulled and notnulled images)
         runs = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
+        print(f'Found {runs}')
 
-        try: # trying to register to first eventStim run
+        if not sub == 'sub-07':
+            try: # trying to register to first eventStim run
+                referenceRun = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_ses-00*_task-event*run-00*_cbv.nii.gz'))[0]
+                refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
+                runs.remove(referenceRun)
+                print(f'Registering all runs to {refBase}')
 
-            referenceRun = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_ses-00*_task-event*run-00*_cbv.nii.gz'))[0]
-            refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
-            runs.remove(referenceRun)
-            print(f'Registering all runs to {refBase}')
+            except: # if not possible, register to first run
+                referenceRun = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_ses-00*_task-*run-00*_cbv.nii.gz'))[0]
+                refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
+                runs.remove(referenceRun)
+                print(f'Registering all runs to {refBase}')
 
-        except: # if not possible, register to first run
-            referenceRun = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_ses-00*_task-*run-00*_cbv.nii.gz'))[0]
-            refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
-            runs.remove(referenceRun)
-            print(f'Registering all runs to {refBase}')
-
-
-        fixed = ants.image_read(f'{outFolder}/{refBase}_T1w.nii')
-        mask = ants.image_read(f'{outFolder}/{refBase}_nulled_moma.nii')
 
         for run in runs:
             base = os.path.basename(run).rsplit('.', 2)[0][:-4]
             print(f'Processing run {base}')
+
+            if sub == 'sub-07':
+
+                if 'eventStim_run-001' in run:
+                    referenceRun = run
+                    refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
+                    print(f'Registering eventStim runs to {refBase}')
+                    print('Continuing...')
+                    continue
+
+                if 'blockStim_run-001' in run:
+                    referenceRun = run
+                    refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
+                    print(f'Registering blockStim runs to {refBase}')
+                    print('Continuing...')
+                    continue
+
+
+            print(f'Registering {base} to {refBase}')
+
+            fixed = ants.image_read(f'{outFolder}/{refBase}_T1w.nii')
+            mask = ants.image_read(f'{outFolder}/{refBase}_nulled_moma.nii')
+
 
             # Define moving image
             moving = ants.image_read(f'{outFolder}/{base}_T1w.nii')
@@ -289,32 +310,32 @@ for sub in SUBS:
             nb.save(img, f'{outFolder}/{base}_reg_T1w.nii')
 
 
-# Make overall t1w
-dataFiles = sorted(glob.glob(f'{outFolder}/*_moco_reg.nii'))
-for modality in ['nulled', 'notnulled']:
-    dataFiles.append(f'{outFolder}/{refBase}_{modality}_moco.nii')
-
-for i, file in enumerate(dataFiles):
-    # Load nulled motion corrected timeseries
-    nii = nb.load(file)
-    data = nii.get_fdata()
-
-    if i == 0:
-        combined = data
-    else:
-        # Concatenate nulled and notnulled timeseries
-        combined = np.concatenate((combined,data), axis=3)
-
-
-    stdDev = np.std(combined, axis = 3)
-
-    #Compute mean
-    mean = np.mean(combined, axis = 3)
-    # Compute variation
-    cvar = stdDev/mean
-    # Take inverse
-    cvarInv = 1/cvar
-
-# And save the image
-img = nb.Nifti1Image(cvarInv, header=header, affine=affine)
-nb.save(img, f'{outFolder}/{sub}_{ses}_T1w.nii')
+# # Make overall t1w
+# dataFiles = sorted(glob.glob(f'{outFolder}/*_moco_reg.nii'))
+# for modality in ['nulled', 'notnulled']:
+#     dataFiles.append(f'{outFolder}/{refBase}_{modality}_moco.nii')
+#
+# for i, file in enumerate(dataFiles):
+#     # Load nulled motion corrected timeseries
+#     nii = nb.load(file)
+#     data = nii.get_fdata()
+#
+#     if i == 0:
+#         combined = data
+#     else:
+#         # Concatenate nulled and notnulled timeseries
+#         combined = np.concatenate((combined,data), axis=3)
+#
+#
+#     stdDev = np.std(combined, axis = 3)
+#
+#     #Compute mean
+#     mean = np.mean(combined, axis = 3)
+#     # Compute variation
+#     cvar = stdDev/mean
+#     # Take inverse
+#     cvarInv = 1/cvar
+#
+# # And save the image
+# img = nb.Nifti1Image(cvarInv, header=header, affine=affine)
+# nb.save(img, f'{outFolder}/{sub}_{ses}_T1w.nii')
