@@ -1,3 +1,9 @@
+'''
+
+Reads .log files and outputs event files in BIDS format.
+
+'''
+
 import numpy as np
 import glob
 import pandas as pd
@@ -49,9 +55,6 @@ for sub in subs:
         # initiate lists
         stimStart = []
         stimStop = []
-
-
-
 
         # loop over lines and fine stimulation start and stop times
         for index, row in logFile.iterrows():
