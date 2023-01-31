@@ -115,12 +115,15 @@ for sub in SUBS:
                 img = nb.Nifti1Image(reference, header=header, affine=affine)
                 nb.save(img, f'{outFolder}/{base}_{modality}_reference.nii')
 
+                # Make moma
+                print('Generating mask')
+                subprocess.run(f'3dAutomask -prefix {outFolder}/{base}_{modality}_moma.nii.gz -peels 3 -dilate 2 {outFolder}/{base}_{modality}_reference.nii', shell=True)
+
                 # Load reference in antsPy style
                 fixed = ants.image_read(f'{outFolder}/{base}_{modality}_reference.nii')
 
-                # Create motion mask
-                mask = ants.get_mask(fixed, cleanup=2)
-                ants.image_write(mask, f'{outFolder}/{base}_{modality}_moma.nii')
+                # Get motion mask
+                mask = ants.image_read(f'{outFolder}/{base}_{modality}_moma.nii.gz')
 
                 # Load data in antsPy style
                 ts = ants.image_read(f'{outFolder}/{base}_{modality}.nii')
