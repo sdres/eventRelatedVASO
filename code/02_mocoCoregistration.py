@@ -23,6 +23,7 @@ ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 # Set subjects to work on
 SUBS = ['sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
+SUBS = ['sub-14']
 
 for sub in SUBS:
     print(f'Working on {sub}')
@@ -84,7 +85,6 @@ for sub in SUBS:
                 os.makedirs(runMotionDir)
                 print("Runwise motion directory is created")
 
-
             for start, modality in enumerate(['notnulled', 'nulled']):
                 print(f'Starting with {modality}')
 
@@ -97,10 +97,14 @@ for sub in SUBS:
                 dataComplete = nii.get_fdata()
 
                 # Separate nulled and notnulled data
-                data = dataComplete[:,:,:, start:-2:2]  # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled. Here, I also get rid of the noise maps
+                data = dataComplete[...,start:-2:2]  # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled. Here, I also get rid of the noise maps
+
+                # Overwrite first 5 timepoints
+                for tp in range(5):
+                    data[...,tp] = data[...,tp+5]
 
                 # Make new nii and save
-                img = nb.Nifti1Image(data, header=header, affine=affine)
+                img = nb.Nifti1Image(data, header = header, affine = affine)
                 nb.save(img, f'{outFolder}/{base}_{modality}.nii')
 
                 # Make reference image
@@ -146,8 +150,6 @@ for sub in SUBS:
             # And save the image
             img = nb.Nifti1Image(t1w, header = header, affine = affine)
             nb.save(img, f'{outFolder}/{base}_T1w.nii')
-
-
 
 ############################################################################
 ############# Here, the coregistration of multiple runs starts #############
@@ -202,7 +204,6 @@ for sub in SUBS:
                 runs.remove(referenceRun)
                 print(f'Registering all runs to {refBase}')
 
-
         for run in runs:
             base = os.path.basename(run).rsplit('.', 2)[0][:-4]
             print(f'Processing run {base}')
@@ -223,7 +224,6 @@ for sub in SUBS:
                     print('Continuing...')
                     continue  # Skip this run, as it is the reference
 
-
             print(f'Registering {base} to {refBase}')
 
             fixed = ants.image_read(f'{outFolder}/{refBase}_T1w.nii')
@@ -243,7 +243,7 @@ for sub in SUBS:
 
             # Apply registration
             mywarpedimage = ants.apply_transforms(fixed = fixed,
-                                                  moving=moving,
+                                                  moving = moving,
                                                   transformlist = mytx['fwdtransforms'],
                                                   interpolator = 'bSpline'
                                                   )
@@ -266,18 +266,18 @@ for sub in SUBS:
                 dataComplete = nii.get_fdata()
 
                 # Separate nulled and notnulled data
-                data = dataComplete[:,:,:, start:-2:2]  # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled. Here, I also get rid of the noise maps
+                data = dataComplete[...,start:-2:2]  # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled. Here, I also get rid of the noise maps
+
+                # # Overwrite first 3 timepoints
+                for tp in range(5):
+                    data[...,tp] = data[...,tp+5]
 
                 # Separate volumes
                 for i in range(data.shape[-1]):
-                    if i <= 2: # Overwrite first 3 volumes with volumes 4,5 and 6
-                        vol = data[:,:,:,i+3]
-                    else:
-                        vol = data[:,:,:,i]
+                    vol = data[...,i]
 
                     img = nb.Nifti1Image(vol, header = header, affine = affine)
                     nb.save(img, f'{outFolder}/{base}_{modality}_vol{i:03d}.nii')
-
 
                 for i in range(data.shape[-1]):
                     # Load volume
