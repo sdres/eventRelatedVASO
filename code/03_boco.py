@@ -1,10 +1,24 @@
+"""
+
+Performing part of the VASO pipeline. Most crucially:
+- Temporally upsampling data with factor of 2
+- Fixing TR in header
+- Prepending volume to nulled data to match timing
+- BOLD-correction
+- Misc data reduction
+- QA
+
+"""
+
 import subprocess
 import glob
 import os
 import nibabel as nb
 import numpy as np
 import re
-root = '/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti'
+
+# Define some directories
+ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 
 def findTR(logfile):
@@ -13,7 +27,7 @@ def findTR(logfile):
 
     triggerTimes = []
     for line in f[1:]:
-        if re.findall("Keypress: 5",line):
+        if re.findall("Keypress: 5", line):
             triggerTimes.append(float(re.findall("\d+\.\d+", line)[0]))
 
     triggerTimes[0] = 0
@@ -30,157 +44,153 @@ def findTR(logfile):
     return meanTriggerDur
 
 
-# for sub in ['sub-03', 'sub-05', 'sub-06']:
-for sub in ['sub-09']:
-    # for ses in ['ses-001', 'ses-002']:
-    for ses in ['ses-001']:
-        runs = sorted(glob.glob(f'{root}/{sub}/{ses}/func/{sub}_{ses}_task-*run-00*_cbv.nii.gz'))
-        referenceRun = sorted(glob.glob(f'{root}/{sub}/ses-00*/func/{sub}_ses-00*_task-event*run-00*_cbv.nii.gz'))[0]
-        outFolder = f'/media/sebastian/Data/EVENTRELATED_PILOT/rawData/Nifti/derivatives/{sub}/{ses}'
+# SUBS = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
+SUBS = ['sub-13']
 
-        for run in runs[-2:-1]:
+for sub in SUBS:
+    print(f'Working on {sub}')
+
+    # Set folder for subject
+    subFolder = f'{ROOT}/derivativesTestTest/{sub}'
+
+    # =========================================================================
+    # Look for sessions
+    # Collectall runs across sessions (containing both nulled and notnulled images)
+    allRuns = sorted(glob.glob(f'{ROOT}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
+
+    # Initialte list for sessions
+    sessions = []
+    # Find all sessions
+    for run in allRuns:
+        for i in range(1, 3):  # We had a maximum of 2 sessions
+            if f'ses-00{i}' in run:
+                sessions.append(f'ses-00{i}')
+
+    # Get rid of duplicates
+    sessions = sorted(set(sessions))
+    print(f'Found data from sessions: {sessions}')
+
+    # Loop over sessions
+    for ses in sessions:
+        print(f'Working on {ses}')
+
+        # Set folder for session outputs
+        outFolder = f'{ROOT}/derivativesTestTest/{sub}/{ses}/func'
+
+        # Look for individual runs within session (containing both nulled and notnulled images)
+        runs = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_{ses}_task-*run-00*_cbv.nii.gz'))
+
+        for run in runs:
             base = os.path.basename(run).rsplit('.', 2)[0][:-4]
             print(f'Processing run {base}')
 
             for start, modality in enumerate(['notnulled', 'nulled']):
-                command = f'/home/sebastian/abin/3dUpsample '
+                print(f'Starting with {modality}, indexed with {start}')
+
+                command = f'3dUpsample '
                 command += f'-overwrite '
                 command += f'-datum short '
                 command += f'-prefix {outFolder}/{base}_{modality}_intemp.nii '
                 command += f'-n 2 '
-                command += f'-input {outFolder}/{base}_moco_{modality}.nii'
-
+                command += f'-input {outFolder}/{base}_{modality}_moco.nii'
 
                 subprocess.call(command, shell=True)
 
-            nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
-            header = nii.header
-            affine = nii.affine
-            data = nii.get_fdata()
+                TR = findTR(f'{ROOT}/derivatives/{sub}/{ses}/events/{base}.log')
 
-            NumVol_notnulled = data.shape[-1]
-            print(f'notnulled timepoints: {NumVol_notnulled}')
+                # fix TR in header
+                subprocess.call(
+                    f'3drefit -TR {TR} '
+                    + f'{outFolder}'
+                    + f'/{base}_{modality}_intemp.nii',
+                    shell=True
+                    )
 
-            nii = nb.load(f'{outFolder}/{base}_nulled_intemp.nii')
-            header = nii.header
-            affine = nii.affine
-            data = nii.get_fdata()
+                # =====================================================================
+                # Duplicate first nulled timepoint to match timing between cbv and bold
+                # =====================================================================
 
-            NumVol_nulled = data.shape[-1]
-            print(f'nulled timepoints: {NumVol_nulled}')
+                if modality == 'nulled':
+                    nii = nb.load(
+                        f'{outFolder}'
+                        + f'/{base}_{modality}_intemp.nii'
+                        )
 
+                    # Load data
+                    data = nii.get_fdata()  # Get data
+                    header = nii.header  # Get header
+                    affine = nii.affine  # Get affine
 
-            if NumVol_nulled < NumVol_notnulled:
-                newNrVols = NumVol_nulled-1
-            if NumVol_nulled >= NumVol_notnulled:
-                newNrVols = NumVol_notnulled-2
+                    # Make new array
+                    newData = np.zeros(data.shape)
 
-            # make new nulled data
-            nii = nb.load(f'{outFolder}/{base}_nulled_intemp.nii')
-            header = nii.header
-            affine = nii.affine
-            data = nii.get_fdata()
+                    for i in range(data.shape[-1]):
+                        if i == 0:
+                            newData[..., i] = data[..., i]
+                        else:
+                            newData[..., i] = data[..., i-1]
 
-            newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],data.shape[3]))
-            for i in range(data.shape[3]):
-                if i == 0:
-                    newData[:,:,:,i]=data[:,:,:,i]
-                else:
-                    newData[:,:,:,i]=data[:,:,:,i-1]
-            img = nb.Nifti1Image(newData, header=header, affine=affine)
-            nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
+                    # Save data
+                    img = nb.Nifti1Image(newData, header=header, affine=affine)
+                    nb.save(img,
+                            f'{outFolder}'
+                            + f'/{base}_{modality}_intemp.nii'
+                            )
 
+            # ==========================================================================
+            # BOLD-correction
+            # ==========================================================================
+            print(f'Starting BOCO')
 
+            nulledFile = f'{outFolder}/{base}_nulled_intemp.nii'
+            notnulledFile = f'{outFolder}/{base}_notnulled_intemp.nii'
 
-            # make new notnulled data
-            nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
-            header = nii.header
-            affine = nii.affine
-            data = nii.get_fdata()
+            # Load data
+            nii1 = nb.load(nulledFile).get_fdata()  # Load cbv data
+            nii2 = nb.load(notnulledFile).get_fdata()  # Load BOLD data
 
-            newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],data.shape[3]))
-            for i in range(data.shape[3]):
-                newData[:,:,:,i]=data[:,:,:,i]
-            img = nb.Nifti1Image(newData, header=header, affine=affine)
-            nb.save(img, f'{outFolder}/{base}_notnulled_intemp.nii')
-
-
-            if NumVol_nulled <= NumVol_notnulled:
-                print('nulled has less volumes')
-                newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_nulled))
-                for i in range(NumVol_nulled):
-                    if i == 0:
-                        newData[:,:,:,i]=data[:,:,:,i]
-                    else:
-                        newData[:,:,:,i]=data[:,:,:,i-1]
-
-                # Prepare header with new nr of volumes
-                newHead = header.copy()
-                newHead['dim'][4]=NumVol_nulled
-
-
-                img = nb.Nifti1Image(newData, header=newHead, affine=affine)
-                nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
-
-
-                nii = nb.load(f'{outFolder}/{base}_notnulled_intemp.nii')
-                header = nii.header
-                affine = nii.affine
-                data = nii.get_fdata()
-
-                newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_nulled))
-                for i in range(NumVol_nulled):
-                    if i == 0:
-                        newData[:,:,:,i]=data[:,:,:,i]
-                    else:
-                        newData[:,:,:,i]=data[:,:,:,i-1]
-
-                # Prepare header with new nr of volumes
-                newHead = header.copy()
-                newHead['dim'][4]=NumVol_nulled
-
-
-                img = nb.Nifti1Image(newData, header=newHead, affine=affine)
-                nb.save(img, f'{outFolder}/{base}_notnulled_intemp.nii')
-
-
+            # Find timeseries with fewer volumes
+            if nii1.shape[-1] < nii2.shape[-1]:
+                maxTP = nii1.shape[-1]
+            elif nii1.shape[-1] > nii2.shape[-1]:
+                maxTP = nii2.shape[-1]
             else:
-                print('notnulled has less volumes')
-                newData = np.zeros((data.shape[0],data.shape[1],data.shape[2],NumVol_notnulled))
-                for i in range(NumVol_notnulled):
-                    if i == 0:
-                        newData[:,:,:,i]=data[:,:,:,i]
-                    else:
-                        newData[:,:,:,i]=data[:,:,:,i-1]
-                # Prepare header with new nr of volumes
-                newHead = header.copy()
-                newHead['dim'][4]=NumVol_notnulled
+                maxTP = nii1.shape[-1]-1
 
-                img = nb.Nifti1Image(newData, header=newHead, affine=affine)
-                nb.save(img, f'{outFolder}/{base}_nulled_intemp.nii')
+            header = nb.load(nulledFile).header  # Get header
+            affine = nb.load(nulledFile).affine  # Get affine
 
+            # Divide VASO by BOLD for actual BOCO
+            new = np.divide(nii1[..., :maxTP], nii2[..., :maxTP])
 
-            print('correcting TR in header and calculating mean image')
-            tr = findTR(f'{root}/derivatives/{sub}/{ses}/events/{base}.log')
-            for start, modality in enumerate(['notnulled', 'nulled']):
-                subprocess.run(f'/home/sebastian/abin/3drefit -TR {tr} {outFolder}/{base}_{modality}_intemp.nii',shell=True)
+            # Clip range to -1.5 and 1.5. Values should be between 0 and 1 anyway.
+            new[new > 1.5] = 1.5
+            new[new < -1.5] = -1.5
 
-                nii = nb.load(f'{outFolder}/{base}_moco_{modality}.nii')
-                header = nii.header
-                affine = nii.affine
-                data = nii.get_fdata()
-                mean = np.mean(data,axis=-1)
-                img = nb.Nifti1Image(mean, header=header, affine=affine)
-                nb.save(img, f'{outFolder}/{base}_{modality}_mean.nii')
+            # Save BOLD-corrected VASO image
+            img = nb.Nifti1Image(new, header=header, affine=affine)
 
+            nb.save(
+                img, f'{outFolder}'
+                + f'/{base}_VASO_LN.nii'
+                )
 
-            print('running BOCO')
-            subprocess.run(f'/home/sebastian/git/laynii/LN_BOCO -Nulled {outFolder}/{base}_nulled_intemp.nii -BOLD {outFolder}/{base}_notnulled_intemp.nii -output {outFolder}/{base}', shell=True)
+            # Multiply VASO by 100 because GLM was faulty if data was scaled between 0 and 1
+            command = 'fslmaths '
+            command += f'{outFolder}/{base}_VASO_LN.nii '
+            command += '-mul 100 '
+            command += f'{outFolder}/{base}_VASO.nii.gz '
+            command += '-odt short'
+            subprocess.run(command, shell=True)
 
+            # Save BOLD with new name and short datatype
+            command = 'fslmaths '
+            command += f'{outFolder}/{base}_notnulled_intemp.nii '
+            command += '-mul 1 '
+            command += f'{outFolder}/{base}_BOLD.nii.gz '
+            command += '-odt short'
+            subprocess.run(command, shell=True)
 
-            subprocess.run(f'fslmaths {outFolder}/{base}_VASO_LN.nii -mul 100 {outFolder}/{base}_VASO.nii.gz -odt short', shell=True)
-            subprocess.run(f'fslmaths {outFolder}/{base}_notnulled_intemp.nii  -mul 1 {outFolder}/{base}_BOLD.nii.gz -odt short', shell=True)
-
-            # calculate quality measures
+            print('Calculating quality measures')
             for modality in ['BOLD', 'VASO']:
-                subprocess.run(f'/home/sebastian/git/laynii/LN_SKEW -input {outFolder}/{base}_{modality}.nii.gz', shell=True)
+                subprocess.run(f'LN_SKEW -input {outFolder}/{base}_{modality}.nii.gz', shell=True)
