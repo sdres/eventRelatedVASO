@@ -29,6 +29,7 @@ ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 SUBS = ['sub-14']
 # SUBS = ['sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
 
+
 for sub in SUBS:
     print(f'Working on {sub}')
 
@@ -75,13 +76,14 @@ for sub in SUBS:
         for runType in runTypes:
             print(f'Processing {runType}')
             # if runType == 'blockStimRandom':
-            if 'blockSti' in runType:
-                print('skipping')
-                continue
+            # if 'eventS' in runType:
+            #     print('skipping')
+            #     continue
+
             # Look for individual runs within session (containing both nulled and notnulled images)
             runs = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_{ses}_task-{runType}_run-00*_cbv.nii.gz'))
 
-            for modality in ['VASO', 'BOLD']:
+            for modality in ['VASO', 'BOLD']:  # Loop over BOLD and VASO
                 print(f'Processing {modality}')
 
                 niiFiles = []
@@ -112,14 +114,7 @@ for sub in SUBS:
                         )
                     design_matrices.append(design_matrix)
 
-
-from nilearn.plotting import plot_design_matrix
-plot_design_matrix(design_matrices[0])
-plot_design_matrix(design_matrices[1])
-
-
-
-                fmri_glm = FirstLevelModel(mask_img = False, drift_model=None)
+                fmri_glm = FirstLevelModel(mask_img = False, drift_model = None)
 
                 fmri_glm = fmri_glm.fit(niiFiles, design_matrices = design_matrices)
 
@@ -140,12 +135,11 @@ plot_design_matrix(design_matrices[1])
                     print('both visual and visiotactile')
                     if modality == 'BOLD':
                         contrasts = {'visiotactile': + basic_contrasts['visiotactile'],
-                                     'visual': + basic_contrasts['visual']
-                            }
+                                     'visual': + basic_contrasts['visual']                            }
+
                     if modality == 'VASO':
                         contrasts = {'visiotactile': - basic_contrasts['visiotactile'],
-                                     'visual': - basic_contrasts['visual']
-                            }
+                                     'visual': - basic_contrasts['visual']                            }
 
                 if 'VisOnly' in runType:
                     print('only contrast is visual')
@@ -159,6 +153,8 @@ plot_design_matrix(design_matrices[1])
 
                 # Iterate on contrasts
                 for contrast_id, contrast_val in contrasts.items():
+                    print(f'Computing contrast: {contrast_id}')
+                    print(f'With matrix: {contrast_val}')
                     # compute the contrasts
                     z_map = fmri_glm.compute_contrast(
                         contrast_val, output_type='z_score')
