@@ -25,7 +25,7 @@ subs = ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','sub-1
 # Done
 subs = ['sub-06','sub-08']
 # To do
-subs = ['sub-07']
+subs = ['sub-14']
 
 # Set modalities to work on
 modalities = ['BOLD', 'VASO']
@@ -104,6 +104,7 @@ for sub in subs:
                 print('only contrast is visual')
                 contrastTypes.append('visual')
 
+            contrastTypes.append('fsl')
 
             for modality in ['VASO', 'BOLD']:
                 print(f'Processing {modality}')
@@ -122,8 +123,10 @@ for sub in subs:
                         layerData = layerNii.get_fdata()  # Load as array
                         layers = np.unique(layerData)[1:]  # Look for number of layers
 
-
-                        map = sorted(glob.glob(f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/upsample/{sub}_{runType}_{modality}_{contrastType}_ups5x.nii'))[0]
+                        if not contrastType == 'fsl':
+                            map = sorted(glob.glob(f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/upsample/{sub}_{runType}_{modality}_{contrastType}_ups5x.nii'))[0]
+                        if contrastType == 'fsl':
+                            map = sorted(glob.glob(f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/upsample/{modality}_zstat1_ups5x.nii'))[0]
 
 
                         dataNii = nb.load(map)
@@ -142,6 +145,7 @@ for sub in subs:
                             focusList.append(focus)
                             contrastList.append(contrastType)
                             runTypeList.append(runType)
+
                             if modality =='BOLD':
                                 dataList.append(mean)
                             if modality =='VASO':
@@ -150,10 +154,10 @@ for sub in subs:
 
 zscoreData = pd.DataFrame({'subject':subList, 'layer':layerList, 'modality':modalityList, 'data':dataList, 'contrast':contrastList, 'focus':focusList, 'runType':runTypeList})
 
-
-for modality in modalities:
-
-    tmp = zscoreData.loc[(zscoreData['modality']==modality)&(zscoreData['contrast']=='visiotactile')]
+for modality in ['VASO']:
+    tmp = zscoreData.loc[(zscoreData['modality']==modality)&(zscoreData['runType']=='eventStimRandom')]
+    # tmp = zscoreData.loc[(zscoreData['modality']==modality)&(zscoreData['contrast']=='visiotactile')]
     plt.figure()
-    sns.lineplot(data=tmp, x='layer',y='data',hue='runType')
+    plt.title(modality)
+    sns.lineplot(data=tmp, x='layer',y='data',hue='contrast')
     plt.show()
