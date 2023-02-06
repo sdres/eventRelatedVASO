@@ -1,8 +1,8 @@
-'''
+"""
 
 Do motion correction and register runs
 
-'''
+"""
 
 import ants
 import os
@@ -10,20 +10,17 @@ import glob
 import nibabel as nb
 import numpy as np
 import subprocess
-import nipype.interfaces.fsl as fsl
-import pandas as pd
 import sys
-
-sys.path.append('./code')
-
 from computeT1w import *
+
+# sys.path.append('./code')
 
 # Set base directory
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 # Set subjects to work on
-SUBS = ['sub-08','sub-09','sub-11','sub-12','sub-13','sub-14']
-SUBS = ['sub-14']
+# SUBS = ['sub-08', 'sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
+SUBS = ['sub-12']
 
 for sub in SUBS:
     print(f'Working on {sub}')
@@ -44,7 +41,7 @@ for sub in SUBS:
     sessions = []
     # Find all sessions
     for run in allRuns:
-        for i in range(1,3):  # We had a maximum of 2 sessions
+        for i in range(1, 3):  # We had a maximum of 2 sessions
             if f'ses-00{i}' in run:
                 sessions.append(f'ses-00{i}')
 
@@ -97,18 +94,20 @@ for sub in SUBS:
                 dataComplete = nii.get_fdata()
 
                 # Separate nulled and notnulled data
-                data = dataComplete[...,start:-2:2]  # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled. Here, I also get rid of the noise maps
+                # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled.
+                # # Here, I also get rid of the noise maps by omitting the last 2 timepoints
+                data = dataComplete[..., start:-2:2]
 
                 # Overwrite first 5 timepoints
                 for tp in range(5):
-                    data[...,tp] = data[...,tp+5]
+                    data[..., tp] = data[..., tp+5]
 
                 # Make new nii and save
-                img = nb.Nifti1Image(data, header = header, affine = affine)
+                img = nb.Nifti1Image(data, header=header, affine=affine)
                 nb.save(img, f'{outFolder}/{base}_{modality}.nii')
 
                 # Make reference image
-                reference = np.mean(data[:,:,:,4:6], axis = -1)
+                reference = np.mean(data[:, :, :, 4:6], axis=-1)
 
                 # And save it
                 img = nb.Nifti1Image(reference, header=header, affine=affine)
@@ -116,7 +115,11 @@ for sub in SUBS:
 
                 # Make moma
                 print('Generating mask')
-                subprocess.run(f'3dAutomask -prefix {outFolder}/{base}_{modality}_moma.nii.gz -peels 3 -dilate 2 {outFolder}/{base}_{modality}_reference.nii', shell=True)
+                command = '3dAutomask '
+                command += f'-prefix {outFolder}/{base}_{modality}_moma.nii.gz '
+                command += f'-peels 3 -dilate 2  '
+                command += f'{outFolder}/{base}_{modality}_reference.nii'
+                subprocess.run(command, shell=True)
 
                 # Load reference in antsPy style
                 fixed = ants.image_read(f'{outFolder}/{base}_{modality}_reference.nii')
@@ -128,7 +131,7 @@ for sub in SUBS:
                 ts = ants.image_read(f'{outFolder}/{base}_{modality}.nii')
 
                 # Perform motion correction
-                corrected = ants.motion_correction(ts, fixed = fixed, mask = mask)
+                corrected = ants.motion_correction(ts, fixed=fixed, mask=mask)
                 ants.image_write(corrected['motion_corrected'], f'{outFolder}/{base}_{modality}_moco.nii')
 
                 # Save transformation matrix for later
@@ -148,7 +151,7 @@ for sub in SUBS:
             affine = nb.load(f'{outFolder}/{base}_nulled_moco.nii').affine
 
             # And save the image
-            img = nb.Nifti1Image(t1w, header = header, affine = affine)
+            img = nb.Nifti1Image(t1w, header=header, affine=affine)
             nb.save(img, f'{outFolder}/{base}_T1w.nii')
 
 ############################################################################
@@ -170,7 +173,7 @@ for sub in SUBS:
     sessions = []
     # Find all sessions
     for run in allRuns:
-        for i in range(1,3):  # We had a maximum of 2 sessions
+        for i in range(1, 3):  # We had a maximum of 2 sessions
             if f'ses-00{i}' in run:
                 sessions.append(f'ses-00{i}')
 
@@ -192,13 +195,13 @@ for sub in SUBS:
         runs = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
 
         if not sub == 'sub-07':
-            try: # trying to register to first eventStim run
+            try:  # trying to register to first eventStim run
                 referenceRun = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_ses-00*_task-event*run-00*_cbv.nii.gz'))[0]
                 refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
                 runs.remove(referenceRun)
                 print(f'Registering all runs to {refBase}')
 
-            except: # if not possible, register to first run
+            except:  # if not possible, register to first run
                 referenceRun = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_ses-00*_task-*run-00*_cbv.nii.gz'))[0]
                 refBase = os.path.basename(referenceRun).rsplit('.', 2)[0][:-4]
                 runs.remove(referenceRun)
@@ -232,20 +235,20 @@ for sub in SUBS:
             # Define moving image
             moving = ants.image_read(f'{outFolder}/{base}_T1w.nii')
             # Do registration
-            mytx = ants.registration(fixed = fixed,
-                                     moving = moving,
-                                     type_of_transform = 'Rigid',
-                                     mask = mask
+            mytx = ants.registration(fixed=fixed,
+                                     moving=moving,
+                                     type_of_transform='Rigid',
+                                     mask=mask
                                      )
 
             # Copy transform file for later
             os.system(f"cp {mytx['fwdtransforms'][0]} {outFolder}/{base}_T1w_registered-{refBase}.mat")
 
             # Apply registration
-            mywarpedimage = ants.apply_transforms(fixed = fixed,
-                                                  moving = moving,
-                                                  transformlist = mytx['fwdtransforms'],
-                                                  interpolator = 'bSpline'
+            mywarpedimage = ants.apply_transforms(fixed=fixed,
+                                                  moving=moving,
+                                                  transformlist=mytx['fwdtransforms'],
+                                                  interpolator='bSpline'
                                                   )
             # Save transformed image
             ants.image_write(mywarpedimage, f'{outFolder}/{base}_T1w_registered-{refBase}.nii')
@@ -270,13 +273,13 @@ for sub in SUBS:
 
                 # # Overwrite first 3 timepoints
                 for tp in range(5):
-                    data[...,tp] = data[...,tp+5]
+                    data[..., tp] = data[..., tp+5]
 
                 # Separate volumes
                 for i in range(data.shape[-1]):
-                    vol = data[...,i]
+                    vol = data[..., i]
 
-                    img = nb.Nifti1Image(vol, header = header, affine = affine)
+                    img = nb.Nifti1Image(vol, header=header, affine=affine)
                     nb.save(img, f'{outFolder}/{base}_{modality}_vol{i:03d}.nii')
 
                 for i in range(data.shape[-1]):
@@ -286,10 +289,10 @@ for sub in SUBS:
                     transformWithin = f'{motionDir}/{base}/{base}_{modality}_vol{i:03d}.mat'
 
                     # Apply both transformations
-                    mywarpedimage = ants.apply_transforms(fixed = fixed,
-                                                          moving = moving,
-                                                          transformlist = [transformWithin, transformBetween],
-                                                          interpolator = 'bSpline'
+                    mywarpedimage = ants.apply_transforms(fixed=fixed,
+                                                          moving=moving,
+                                                          transformlist=[transformWithin, transformBetween],
+                                                          interpolator='bSpline'
                                                           )
                     # Save warped image
                     ants.image_write(mywarpedimage, f'{outFolder}/{base}_{modality}_vol{i:03d}.nii')
@@ -304,10 +307,10 @@ for sub in SUBS:
                 # Loop over volumes to fill new data
                 for i in range(data.shape[-1]):
                     vol = nb.load(f'{outFolder}/{base}_{modality}_vol{i:03d}.nii').get_fdata()
-                    newData[:,:,:,i] = vol
+                    newData[:, :, :, i] = vol
 
                 # Save new data
-                img = nb.Nifti1Image(newData, header = header, affine = affine)
+                img = nb.Nifti1Image(newData, header=header, affine=affine)
                 nb.save(img, f'{outFolder}/{base}_{modality}_moco.nii')
 
                 # Delete individual volumes
@@ -324,9 +327,8 @@ for sub in SUBS:
             affine = nb.load(f'{outFolder}/{base}_nulled_moco.nii').affine
 
             # And save the image
-            img = nb.Nifti1Image(t1w, header = header, affine = affine)
+            img = nb.Nifti1Image(t1w, header=header, affine=affine)
             nb.save(img, f'{outFolder}/{base}_reg_T1w.nii')
-
 
         # Make overall t1w
         dataFiles = sorted(glob.glob(f'{outFolder}/*_moco.nii'))
@@ -340,12 +342,12 @@ for sub in SUBS:
                 combined = data
             else:
                 # Concatenate nulled and notnulled timeseries
-                combined = np.concatenate((combined,data), axis=3)
+                combined = np.concatenate((combined, data), axis=3)
 
-        stdDev = np.std(combined, axis = 3)
+        stdDev = np.std(combined, axis=3)
 
         #Compute mean
-        mean = np.mean(combined, axis = 3)
+        mean = np.mean(combined, axis=3)
         # Compute variation
         cvar = stdDev/mean
         # Take inverse
