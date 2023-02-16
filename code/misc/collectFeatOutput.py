@@ -66,7 +66,7 @@ for sub in subs:
                                 file = f'{secondLevel[0]}/cope1.feat/stats/zstat1.nii.gz'
                                 tmp = nb.load(file)
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_visuotactile_{modality}_{modelType}_zstat.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_visuotactile_{modality}_model-{modelType}_zstat.nii.gz'
                                 # print(command)
                                 subprocess.run(command, shell=True)
 
@@ -75,7 +75,7 @@ for sub in subs:
                                 file = f'{firstLevel[0]}/stats/zstat1.nii.gz'
                                 tmp = nb.load(file)
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_visuotactile_{modality}_{modelType}_zstat.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_visuotactile_{modality}_model-{modelType}_zstat.nii.gz'
                                 subprocess.run(command, shell=True)
                                 # print(command)
 

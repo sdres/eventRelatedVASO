@@ -58,7 +58,7 @@ for focus in ['v1']:
                 for modality in modalities:
                     eventResults[focus][sub][base][modality] = {}
 
-                    print(f'processing {base}')
+                    print(f'dataProcessing {base}')
 
                     run = f'{outFolder}/{base}_{focus}_{modality}.nii.gz'
 
@@ -1045,7 +1045,7 @@ for sub in ['sub-05','sub-06', 'sub-07','sub-08', 'sub-09','sub-11', 'sub-12','s
             print(base)
 
             if 'Random' in base:
-                print('processing...')
+                print('dataProcessing...')
             else:
                 print('skipping...')
                 continue

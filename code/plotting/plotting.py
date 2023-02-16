@@ -469,7 +469,7 @@ BOLDcmap = {'eventStim': '#ffae6f',
             }
 
 # store as list to loop over
-palettes = [VASOcmap,BOLDcmap]
+palettes = [VASOcmap, BOLDcmap]
 
 for modality, cmap in zip(['VASO', 'BOLD'], palettes):
 
@@ -492,11 +492,9 @@ for modality, cmap in zip(['VASO', 'BOLD'], palettes):
                  linewidth = LW
                  )
 
-
     plt.ylabel(f'Z-score', fontsize=labelSize)
 
     plt.xlabel('Cortical depth', fontsize=labelSize)
-
 
     ax.set_xticks([1, 11], ['WM', 'CSF'], fontsize=tickLabelSize)
 
@@ -573,7 +571,7 @@ import numpy as np
 import os
 
 
-tmpBOLD = data.loc[(data['nrTrials']==1)& (data['subject']=='sub-07')& (data['run'].str.contains('run-001')) & (data['modality'] == 'BOLD')]
+tmpBOLD = data.loc[(data['nrTrials'] == 1) & (data['subject'] == 'sub-07') & (data['run'].str.contains('run-001')) & (data['modality'] == 'BOLD')]
 plt.plot(tmpBOLD['currentAverage'].to_numpy())
 type(tmpBOLD['currentAverage'].to_numpy()[0])
 
@@ -581,10 +579,10 @@ folder = '/Users/sebastiandresbach/git/eventRelatedVASO/results/tmp'
 os.system(f'mkdir {folder}')
 
 seed(5)
-palette = {
-    'BOLD': 'tab:orange',
-    'VASO': 'tab:blue'
-}
+palette = {'BOLD': 'tab:orange',
+           'VASO': 'tab:blue'
+           }
+
 for sub in ['sub-07']:
     print(sub)
 
@@ -631,14 +629,14 @@ for sub in ['sub-07']:
 
 
         ticks = range(0,14)
-        labels = (np.arange(-4,10)*1.3).round(decimals=1)
+        labels = (np.arange(-4, 10)*1.3).round(decimals=1)
 
-        plt.xticks(ticks,labels,rotation=45)
+        plt.xticks(ticks, labels, rotation=45)
 
 
         sns.lineplot(data=layerEventData, x='x', y='data', hue='modality', alpha=0.3, ci=None,palette=palette)
 
-        plt.axvspan(4, 4+(2/1.3), color='grey', alpha=0.2, lw=0, label = 'stimulation')
+        plt.axvspan(4, 4+(2/1.3), color='grey', alpha=0.2, lw=0, label='stimulation')
 
         plt.xticks(fontsize=18)
         plt.yticks(fontsize=18)

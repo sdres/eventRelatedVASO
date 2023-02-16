@@ -76,7 +76,7 @@ FIRdata = pd.DataFrame({'subject':subList, 'run':runList, 'layer':layerList, 'mo
 
 
 layers = {'1':'deep','2':'middle','3':'superficial'}
-eventResults2 = np.load('../../data/trialWiseResponses.npy', allow_pickle=True).item()
+eventResults2 = np.load('../../../data/trialWiseResponses.npy', allow_pickle=True).item()
 
 
 for focus, cmap in zip(['v1'],['tab10']):

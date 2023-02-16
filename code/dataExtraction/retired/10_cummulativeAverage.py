@@ -166,11 +166,11 @@ for focus in ['v1']:
 
 
 
-np.save('../../data/trialWiseResponses.npy', eventResults)
+np.save('../../../data/trialWiseResponses.npy', eventResults)
 
 type(eventResults)
 
-eventResults2 = np.load('../../data/trialWiseResponses.npy', allow_pickle=True).item()
+eventResults2 = np.load('../../../data/trialWiseResponses.npy', allow_pickle=True).item()
 eventResults = eventResults2
 type(eventResults2)
 
@@ -565,7 +565,7 @@ for focus in ['v1']:
 ##############################################
 
 layers = {'1':'deep','2':'middle','3':'superficial'}
-eventResults = np.load('../../data/trialWiseResponses.npy', allow_pickle=True).item()
+eventResults = np.load('../../../data/trialWiseResponses.npy', allow_pickle=True).item()
 
 
 modalityMeans = {}
