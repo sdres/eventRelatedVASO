@@ -10,7 +10,7 @@ import numpy as np
 
 
 # load data
-zscores = pd.read_csv('../results/blocksVsEventsData.csv')
+zscores = pd.read_csv('../results/backupOld/blocksVsEventsData.csv')
 
 results = {}
 
