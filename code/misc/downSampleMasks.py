@@ -1,4 +1,4 @@
-"""Upsample statistical maps and QA data"""
+"""Downsample ROIs to native resolution"""
 
 import nibabel as nb
 import subprocess
@@ -37,10 +37,6 @@ for sub in subs:
 
         sesFolder = f'{ROOT}/derivativesTestTest/{sub}/{ses}'
         outFolder = f'{sesFolder}/func/upsample'
-        # Create folder if it does not exist
-        if not os.path.exists(outFolder):
-            os.makedirs(outFolder)
-            print("Output directory is created")
 
         # ======================================================================
         # Get dims
@@ -62,32 +58,18 @@ for sub in subs:
         ydim = dims[1]
         zdim = dims[2]
 
-        # ======================================================================
-        # Upsample t1w
-        command = f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_ups5x.nii -input {dataFile}'
-        subprocess.run(command, shell=True)
+        # Get masks
+        if not sub == 'sub-07':
+            masks = glob.glob(f'{sesFolder}/func/{sub}_masks/{sub}_*_rim.nii.gz')
+        if sub == 'sub-07':
+            masks = glob.glob(f'{sesFolder}/func/{sub}_masks/{sub}_*_rim*Stim.nii.gz')
 
-        # # Upsample registered Anat
-        # dataFile = glob.glob(f'{sesFolder}/anat/{sub}_brain_registered*.nii')[0]
-        # base = os.path.basename(dataFile).rsplit('.', 2)[0]
-        # command = f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_ups5x.nii -input {dataFile}'
-        # subprocess.run(command ,shell=True)
-
-        # Set folder for session outputs
-        statFolder = f'{sesFolder}/func/statMaps'
-
-        # Get statistical maps
-        statMaps = sorted(glob.glob(f'{statFolder}/*'))
-
-        for statMap in statMaps:
-            base = os.path.basename(statMap).rsplit('.', 2)[0]
-            command = f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_ups5x.nii -input {statMap}'
+        for mask in masks:
+            base = os.path.basename(mask).split('.')[0]
+            outName = f'{sesFolder}/func/{sub}_masks/{base}_down.nii.gz'
+            # Downsample
+            command = f'3dresample -dxyz {xdim} {ydim} {zdim} -rmode Cu -overwrite -prefix {outName} -input {mask}'
             subprocess.run(command, shell=True)
-
-        # ## upsample QA
-        # for measure in ['mean', 'tSNR', 'kurt', 'skew']:
-        #     statMaps = sorted(glob.glob(f'{sesFolder}/func/*{measure}*'))
-        #     for statMap in statMaps:
-        #         base = os.path.basename(statMap).rsplit('.', 2)[0]
-        #         command = f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_ups5x.nii.gz -input {statMap}'
-        #         subprocess.run(command, shell=True)
+            # Threshold and binarize
+            command2 = f'fslmaths {outName} -thr 3 -bin {outName}'
+            subprocess.run(command2, shell=True)

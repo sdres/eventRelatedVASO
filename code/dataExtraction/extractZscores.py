@@ -19,7 +19,7 @@ ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 derivatives = f'{ROOT}/derivativesTestTest'
 
 SUBS = ['sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
-
+# SUBS = ['sub-14']
 for sub in SUBS:
     print(f'Working on {sub}')
 
@@ -64,36 +64,37 @@ for sub in SUBS:
         print(f'Found ROIs for: {focuses}')
 
         for focus in focuses:
-            if sub != 'sub-07':
-                maskFile = f'{sesFolder}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii'
-                mask = nb.load(maskFile).get_fdata()
+            for modality in ['BOLD', 'VASO']:
+                statMaps = sorted(glob.glob(f'{sesFolder}/upsample/{sub}*{modality}*conv*.nii'))
 
-                for modality in ['BOLD', 'VASO']:
-                    statMaps = sorted(glob.glob(f'{sesFolder}/upsample/{sub}*{modality}*conv*.nii'))
+                for statMap in statMaps:
+                    base = os.path.basename(statMap)
+                    inputs = base.split('_')
+                    contrast = inputs[3].split('-')[-1]
 
-                    for statMap in statMaps:
-                        base = os.path.basename(statMap)
-                        inputs = base.split('_')
-                        contrast = inputs[3]
-                        runType = inputs[2].split('-')[-1]
+                    runType = inputs[2].split('-')[-1]
 
-                        if sub == 'sub-07':
-                            maskFile = f'{sesFolder}/{sub}_masks/{sub}_{focus}_11layers_{runType}_layers_equidist.nii'
-                            mask = nb.load(maskFile).get_fdata()
+                    if sub != 'sub-07':
+                        maskFile = f'{sesFolder}/{sub}_masks/{sub}_{focus}_11layers_layers_equidist.nii'
+                        mask = nb.load(maskFile).get_fdata()
+                    if sub == 'sub-07':
+                        maskFile = f'{sesFolder}/{sub}_masks/{sub}_{focus}_11layers_{runType}_layers_equidist.nii'
+                        mask = nb.load(maskFile).get_fdata()
 
-                        data = nb.load(statMap).get_fdata()
-                        for j in range(1, 12):  # Compute bin averages
-                            layerRoi = mask == j
-                            mask_mean = np.mean(data[layerRoi.astype(bool)])
+                    data = nb.load(statMap).get_fdata()
 
-                            subList.append(sub)
-                            dataList.append(mask_mean)
-                            modalityList.append(modality)
-                            layerList.append(j)
-                            runTypeList.append(runType)
-                            contrastList.append(contrast)
-                            focusList.append(focus)
-                            sesList.append(ses)
+                    for j in range(1, 12):  # Compute bin averages
+                        layerRoi = mask == j
+                        mask_mean = np.mean(data[layerRoi.astype(bool)])
+
+                        subList.append(sub)
+                        dataList.append(mask_mean)
+                        modalityList.append(modality)
+                        layerList.append(j)
+                        runTypeList.append(runType)
+                        contrastList.append(contrast)
+                        focusList.append(focus)
+                        sesList.append(ses)
 
 # Store data in DataFrame
 zscores = pd.DataFrame({'subject': subList,

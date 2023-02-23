@@ -1,4 +1,4 @@
-"""Extract tSNR values to compare long and short TR acquisitions"""
+"""Extract QA metrics to compare long and short TR acquisitions"""
 
 import nibabel as nb
 import glob
@@ -8,25 +8,26 @@ import pandas as pd
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 DERIVATIVES = f'{ROOT}/derivativesTestTest'
 
-subs = ['sub-09', 'sub-11']
+SUBS = ['sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
 
 modalities = ['BOLD', 'VASO']
 
 subList = []
 modalityList = []
-tSNRList = []
-meanList = []
 voxelList = []
 runList = []
 focusList = []
 kurtList = []
 skewList = []
+tSNRList = []
+meanList = []
 
-for sub in subs:
+
+for sub in SUBS:
     print(sub)
 
-    # Find session in which long TRs were tested
-    runs = sorted(glob.glob(f'{ROOT}/{sub}/ses-00*/func/{sub}_ses-00*_task-*LongTR*_cbv.nii.gz'))
+    # Find all runs
+    runs = sorted(glob.glob(f'{ROOT}/{sub}/ses-00*/func/{sub}_ses-00*_task-*_cbv.nii.gz'))
 
     for run in runs:
         base = os.path.basename(run).rsplit('.', 2)[0][:-4]
@@ -39,7 +40,14 @@ for sub in subs:
         for modality in modalities:
             for focus in ['v1', 's1']:
                 try:
-                    maskFile = f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_masks/{sub}_{focus}_3layers_layers_equidist.nii'
+                    if sub != 'sub-07':
+                        maskFile = f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_masks/{sub}_{focus}_3layers_layers_equidist.nii'
+                    elif sub == 'sub-07':
+                        if 'eventStim' in run:
+                            maskFile = f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_masks/{sub}_{focus}_3layers_eventStim_layers_equidist.nii'
+                        if 'blockStim' in run:
+                            maskFile = f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_masks/{sub}_{focus}_3layers_blockStim_layers_equidist.nii'
+
                     maskNii = nb.load(maskFile)
                     maskData = maskNii.get_fdata()
                     idxMask = maskData > 0
@@ -93,4 +101,4 @@ tSNRdata = pd.DataFrame({'subject': subList,
                         )
 
 # Save to .csv file
-tSNRdata.to_csv('results/qaLongVsShort.csv', sep=',', index=False)
+tSNRdata.to_csv('results/qa.csv', sep=',', index=False)

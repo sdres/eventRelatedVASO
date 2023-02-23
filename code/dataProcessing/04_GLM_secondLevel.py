@@ -10,13 +10,12 @@ Assumes template files for each type of run.
 import os
 import subprocess
 import glob
-import time
 
 # Set some folder names
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 DERIVATIVES = f'{ROOT}/derivativesTestTest'
 
-subs = ['sub-08']
+subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08']
 
 for sub in subs:
     # Find all runs of participant
@@ -45,32 +44,29 @@ for sub in subs:
 
             for modality in ['BOLD', 'VASO']:
 
-                    for modelType in ['conv', 'fir']:
-                        if modelType == 'fir' and 'block' in runType:
-                            continue
+                for modelType in ['conv', 'fir']:
+                    if modelType == 'fir' and 'block' in runType:
+                        continue
 
-                        # Check if there are multiple runs of runType in session
-                        runTypeRuns = glob.glob(
-                            f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_{ses}_task-{runType}_run-*_{modality}_{modelType}.feat')
+                    # Check if there are multiple runs of runType in session
+                    runTypeRuns = glob.glob(
+                        f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_{ses}_task-{runType}_run-*_{modality}_{modelType}.feat')
 
-                        nrRuns = len(runTypeRuns)
+                    nrRuns = len(runTypeRuns)
 
-                        if nrRuns >= 2:
-                            replacements = {'SUBID': f'{sub}',
-                                            'SESID': ses,
-                                            'ROOT': DERIVATIVES,
-                                            'MODALITY': modality
-                                            }
+                    if nrRuns >= 2:
+                        replacements = {'SUBID': f'{sub}',
+                                        'SESID': ses,
+                                        'ROOT': DERIVATIVES,
+                                        'MODALITY': modality
+                                        }
 
-                            with open(f"{DERIVATIVES}/designFiles/{runType}SecondLevelTemplate{nrRuns}Inputs_{modelType}.fsf") as infile:
-                                with open(f"{DERIVATIVES}/designFiles/{sub}_{ses}_task-{runType}_secondLevel_{modality}_{modelType}.fsf", 'w') as outfile:
-                                    for line in infile:
-                                        for src, target in replacements.items():
-                                            line = line.replace(src, target)
-                                        outfile.write(line)
-
-
-
+                        with open(f"{DERIVATIVES}/designFiles/{runType}SecondLevelTemplate{nrRuns}Inputs_{modelType}.fsf") as infile:
+                            with open(f"{DERIVATIVES}/designFiles/{sub}_{ses}_task-{runType}_secondLevel_{modality}_{modelType}.fsf", 'w') as outfile:
+                                for line in infile:
+                                    for src, target in replacements.items():
+                                        line = line.replace(src, target)
+                                    outfile.write(line)
 
 # =====================================================================================================================
 # Run GLMs
@@ -103,24 +99,23 @@ for sub in subs:
 
             for modality in ['BOLD', 'VASO']:
 
-                    for modelType in ['conv', 'fir']:
-                        if modelType == 'fir' and 'block' in runType:
-                            continue
+                for modelType in ['conv', 'fir']:
+                    if modelType == 'fir' and 'block' in runType:
+                        continue
 
-                        # Check if there are multiple runs of runType in session
-                        runTypeRuns = glob.glob(
-                            f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_{ses}_task-{runType}_run-*_{modality}_{modelType}.feat')
+                    # Check if there are multiple runs of runType in session
+                    runTypeRuns = glob.glob(
+                        f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_{ses}_task-{runType}_run-*_{modality}_{modelType}.feat')
 
-                        nrRuns = len(runTypeRuns)
+                    nrRuns = len(runTypeRuns)
 
-                        if nrRuns >= 2:
+                    if nrRuns >= 2:
 
-                            # Check if the GLM for this run already ran
-                            file = f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_{ses}_task-{runType}_secondLevel_{modality}_{modelType}.gfeat/cope1.feat/stats/zstat1.nii.gz'
+                        # Check if the GLM for this run already ran
+                        file = f'{DERIVATIVES}/{sub}/{ses}/func/{sub}_{ses}_task-{runType}_secondLevel_{modality}_{modelType}.gfeat/cope1.feat/stats/zstat1.nii.gz'
 
-                            if os.path.exists(file):  # If yes, skip
-                                print(f'Second level GLM for {sub} {ses} {runType} {modality} {modelType} already ran')
+                        if os.path.exists(file):  # If yes, skip
+                            print(f'Second level GLM for {sub} {ses} {runType} {modality} {modelType} already ran')
 
-                            if not os.path.exists(file):  # If no, run
-                                subprocess.run(f'feat {DERIVATIVES}/designFiles/{sub}_{ses}_task-{runType}_secondLevel_{modality}_{modelType}.fsf &', shell=True)
-
+                        if not os.path.exists(file):  # If no, run
+                            subprocess.run(f'feat {DERIVATIVES}/designFiles/{sub}_{ses}_task-{runType}_secondLevel_{modality}_{modelType}.fsf &', shell=True)

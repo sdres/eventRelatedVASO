@@ -8,8 +8,8 @@ import nibabel as nb
 
 
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
-subs = ['sub-05', 'sub-06', 'sub-07','sub-08', 'sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
-
+subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
+subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08']
 for sub in subs:
     print('\n\n')
     print(sub)
@@ -21,7 +21,8 @@ for sub in subs:
     for run in runs:
         for i in range(1, 3):
             tmp = f'ses-{i:03d}'
-            sessions.append(tmp)
+            if f'ses-{i:03d}' in run:
+                sessions.append(tmp)
     sessions = set(sessions)
     print(f'Found sessions: {sessions}')
 
@@ -66,7 +67,7 @@ for sub in subs:
                                 file = f'{secondLevel[0]}/cope1.feat/stats/zstat1.nii.gz'
                                 tmp = nb.load(file)
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_visuotactile_{modality}_model-{modelType}_zstat.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visuotactile_{modality}_model-{modelType}_zstat.nii.gz'
                                 # print(command)
                                 subprocess.run(command, shell=True)
 
@@ -75,7 +76,7 @@ for sub in subs:
                                 file = f'{firstLevel[0]}/stats/zstat1.nii.gz'
                                 tmp = nb.load(file)
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_visuotactile_{modality}_model-{modelType}_zstat.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visuotactile_{modality}_model-{modelType}_zstat.nii.gz'
                                 subprocess.run(command, shell=True)
                                 # print(command)
 
@@ -89,7 +90,7 @@ for sub in subs:
                                 number = int(re.findall(r'\d+', cope)[0])
 
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}-visuotactile_modality-{modality}_model-{modelType}_cope-{number:02d}.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visuotactile_modality-{modality}_model-{modelType}_cope-{number:02d}.nii.gz'
                                 subprocess.run(command, shell=True)
 
                     if 'Random' in runType:
@@ -101,14 +102,14 @@ for sub in subs:
                                     file = f'{secondLevel[0]}/cope{i}.feat/stats/zstat1.nii.gz'
                                     tmp = nb.load(file)
                                     command = f'cp {file} '
-                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}-{contrast}_modality-{modality}_model-{modelType}_zstat.nii.gz'
+                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-{contrast}_modality-{modality}_model-{modelType}_zstat.nii.gz'
                                     subprocess.run(command, shell=True)
                                 except:
                                     firstLevel = sorted(glob.glob(f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/*{runType}_run-001_{modality}_{modelType}.feat'))
                                     file = f'{firstLevel[0]}/stats/zstat{i}.nii.gz'
                                     tmp = nb.load(file)
                                     command = f'cp {file} '
-                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}-{contrast}_modality-{modality}_model-{modelType}_zstat.nii.gz'
+                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-{contrast}_modality-{modality}_model-{modelType}_zstat.nii.gz'
                                     subprocess.run(command, shell=True)
 
                         if modelType == 'fir':
@@ -122,13 +123,13 @@ for sub in subs:
                                 # print(f'Cope number: {number}')
                                 if number <=10:
                                     command = f'cp {file} '
-                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}-visual_modality-{modality}_model-{modelType}_cope-{number:02d}.nii.gz'
+                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visual_modality-{modality}_model-{modelType}_cope-{number:02d}.nii.gz'
                                     subprocess.run(command, shell=True)
                                     # print(f'saving as visual {number:02d}')
 
                                 if number >=11:
                                     command = f'cp {file} '
-                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}-visuotactile_modality-{modality}_model-{modelType}_cope-{number-10:02d}.nii.gz'
+                                    command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visuotactile_modality-{modality}_model-{modelType}_cope-{number-10:02d}.nii.gz'
                                     subprocess.run(command, shell=True)
                                     # print(f'saving as visuotactile {number-10:02d}')
 
@@ -139,14 +140,14 @@ for sub in subs:
                                 file = f'{secondLevel[0]}/cope1.feat/stats/zstat1.nii.gz'
                                 tmp = nb.load(file)
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}-visual_modality-{modality}_model-{modelType}_zstat.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visual_modality-{modality}_model-{modelType}_zstat.nii.gz'
                                 subprocess.run(command, shell=True)
                             except:
                                 firstLevel = sorted(glob.glob(f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/*{runType}_run-001_{modality}_{modelType}.feat'))
                                 file = f'{firstLevel[0]}/stats/zstat1.nii.gz'
                                 tmp = nb.load(file)
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}-visual_modality-{modality}_model-{modelType}_zstat.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visual_modality-{modality}_model-{modelType}_zstat.nii.gz'
                                 subprocess.run(command, shell=True)
 
                         if modelType == 'fir':
@@ -159,5 +160,5 @@ for sub in subs:
                                 number = int(re.findall(r'\d+', cope)[0])
 
                                 command = f'cp {file} '
-                                command += f'{statFolder}/{sub}_{ses}_task-{runType}-visual_modality-{modality}_model-{modelType}_cope-{number:02d}.nii.gz'
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visual_modality-{modality}_model-{modelType}_cope-{number:02d}.nii.gz'
                                 subprocess.run(command, shell=True)

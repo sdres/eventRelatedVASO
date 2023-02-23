@@ -24,20 +24,15 @@ plt.style.use('dark_background')
 ########## set general styles ##########
 #########################################
 
-# define figzize
+# Define figzize
 FS = (8, 5)
-
 # define linewidth to 2
 LW = 2
-
-# define fontsize size for x- and y-labels
+# Define fontsize size for x- and y-labels
 labelSize = 24
-
-# define fontsize size for x- and y-ticks
+# Define fontsize size for x- and y-ticks
 tickLabelSize = 18
-
-# define fontsize legend text
-
+# Define fontsize legend text
 legendTextSize = 18
 
 TR = 1.3

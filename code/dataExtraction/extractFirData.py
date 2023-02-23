@@ -4,9 +4,6 @@ import numpy as np
 import glob
 import nibabel as nb
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import matplotlib.gridspec as gridspec
 
 # Disable pandas warining
 pd.options.mode.chained_assignment = None
@@ -34,7 +31,7 @@ focusList = []  # For v1/s1 focus
 contrastList = []
 
 for sub in subs:  # Loop over participants
-
+    print(f'Processing {sub}')
     # =========================================================================
     # Find session with event related runs
     allRuns = sorted(glob.glob(f'{ROOT}/{sub}/*/func/{sub}_*_task-event*run-00*_cbv.nii.gz'))
@@ -57,17 +54,21 @@ for sub in subs:  # Loop over participants
         roiFolder = f'{sesFolder}/{sub}_masks'
 
         for focus in ['v1', 's1']:
+            print(f'{focus}')
+            try:
+                # Set layer file name
+                if sub != 'sub-07':
+                    layerFile = f'{roiFolder}/{sub}_{focus}_3layers_layers_equidist.nii'
+                if sub == 'sub-07':
+                    layerFile = f'{roiFolder}/{sub}_{focus}_3layers_eventStim_layers_equidist.nii'
 
-            # Set layer file name
-            if sub != 'sub-07':
-                layerFile = f'{roiFolder}/{sub}_{focus}_3layers_layers_equidist.nii'
-            if sub == 'sub-07':
-                layerFile = f'{roiFolder}/{sub}_{focus}_3layers_eventStim_layers_equidist.nii'
-
-            # Load layer file in nibabel
-            layerNii = nb.load(layerFile)
-            layerData = layerNii.get_fdata()  # Load as array
-            layers = np.unique(layerData)[1:]  # Look for number of layers
+                # Load layer file in nibabel
+                layerNii = nb.load(layerFile)
+                layerData = layerNii.get_fdata()  # Load as array
+                layers = np.unique(layerData)[1:]  # Look for number of layers
+            except:
+                print(f'No mask found for {focus}')
+                continue
 
             for modality in modalities:
                 print(modality)
@@ -75,7 +76,7 @@ for sub in subs:  # Loop over participants
                 for contrast in ['visual', 'visuotactile']:
 
                     maps = sorted(glob.glob(f'{sesFolder}/upsample/{sub}_{ses}_task-eventStim*-{contrast}_modality-{modality}_model-fir_*_ups5x.nii'))
-                    print(f'found {len(maps)} maps')
+                    print(f'found {len(maps)} maps for {contrast}')
 
                     for i, map in enumerate(maps):
                         try:
@@ -108,67 +109,4 @@ FIRdata = pd.DataFrame({'subject': subList,
                         }
                        )
 # Save to .csv file
-zscores.to_csv('results/firData.csv', sep=',', index=False)
-
-# =============================================================================
-# Plotting
-# ============================================================================
-
-palettesLayers = {'VASO':['#1f77b4','#7dadd9','#c9e5ff'],
-'BOLD':['#ff7f0e', '#ffae6f','#ffdbc2']}
-
-plt.style.use('dark_background')
-
-gs = gridspec.GridSpec(2, 2)
-fig = plt.figure(tight_layout=True,figsize=(10.394,6.299))
-
-for i, modality in enumerate(['BOLD', 'VASO']):
-
-    ax = fig.add_subplot(gs[0, i])
-
-    for j, layer in enumerate(FIRdata['layer'].unique()):
-
-        tmp = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['focus']=='v1')&(FIRdata['layer']==layer)&(FIRdata['contrast']=='visuotactile')]
-        # tmp = FIRdata.loc[(FIRdata['modality']==modality)&(FIRdata['focus']=='v1')&(FIRdata['layer']==layer)]
-
-        # # Normalize to first timpoint
-        # val = np.mean(tmp.loc[tmp['volume'] == 0]['data'])
-        # tmp['data'] -= val
-
-        # Plot layer data
-        sns.lineplot(ax=ax, data=tmp , x="volume", y="data", color=palettesLayers[modality][j],linewidth=2, label=layer)
-
-    yLimits = ax.get_ylim()
-    ax.set_yticks(range(-2,14,2),fontsize=18)
-
-    # prepare x-ticks
-    ticks = range(0,11,2)
-    labels = (np.arange(0,11,2)*1.3).round(decimals=1)
-    for k,label in enumerate(labels):
-        if (label - int(label) == 0):
-            labels[k] = int(label)
-
-    ax.yaxis.set_tick_params(labelsize=18)
-    ax.xaxis.set_tick_params(labelsize=18)
-
-    if i == 0:
-        ax.set_ylabel(r'Signal [$\beta$]', fontsize=24)
-    else:
-        ax.set_ylabel(r'', fontsize=24)
-        ax.set_yticks([])
-
-    ax.legend(loc='upper right',fontsize=12)
-
-    # tweak x-axis
-    ax.set_xticks(ticks[::2])
-    ax.set_xticklabels(labels[::2],fontsize=18)
-    ax.set_xlabel('Time [s]', fontsize=24)
-    ax.set_title(modality, fontsize=24)
-    # draw lines
-    ax.axvspan(0, 2/1.3, color='#e5e5e5', alpha=0.2, lw=0, label = 'stimulation on')
-    ax.axhline(0,linestyle='--',color='white')
-
-plt.savefig(f'/Users/sebastiandresbach/Desktop/sub-all_visuotactileOnly_{focus}_eventResults_withLayers.png', bbox_inches = "tight")
-
-
-plt.show()
+FIRdata.to_csv('results/firData.csv', sep=',', index=False)

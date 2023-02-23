@@ -15,7 +15,7 @@ import time
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 DERIVATIVES = f'{ROOT}/derivativesTestTest'
 
-for sub in ['sub-08']:
+for sub in ['sub-06', 'sub-07', 'sub-08']:
     # Find all runs of participant
     runs = sorted(glob.glob(f'{ROOT}/{sub}/ses-*/func/{sub}_ses-*_task-*run-00*_cbv.nii.gz'))
 
@@ -79,7 +79,7 @@ for sub in ['sub-08']:
 # =====================================================================================================================
 
 executed = 0  # Counter for parallel processes
-for sub in ['sub-08']:
+for sub in ['sub-06', 'sub-07', 'sub-08']:
     runs = sorted(glob.glob(f'{ROOT}/{sub}/ses-00*/func/{sub}_ses-00*_task-*run-00*_cbv.nii.gz'))
     nrRuns = len(runs)
     print(f'Found {nrRuns} runs')

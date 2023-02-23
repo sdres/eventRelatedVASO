@@ -9,7 +9,7 @@ import glob
 
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti/derivativesTestTest'
 
-subs = ['sub-07']
+subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08']
 
 for sub in subs:
     featFolders = sorted(glob.glob(f'{ROOT}/{sub}/ses-00*/func/*.feat'))

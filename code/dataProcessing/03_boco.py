@@ -45,7 +45,7 @@ def findTR(logfile):
 
 
 # SUBS = ['sub-09','sub-11']
-SUBS = ['sub-08']
+SUBS = ['sub-09']
 
 for sub in SUBS:
     print(f'Working on {sub}')
