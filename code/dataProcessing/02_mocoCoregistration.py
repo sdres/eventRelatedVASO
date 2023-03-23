@@ -21,139 +21,139 @@ from computeT1w import *
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 
 # Set subjects to work on
-SUBS = ['sub-09']
-#
-# for sub in SUBS:
-#     print(f'Working on {sub}')
-#
-#     # Set folder for subject
-#     subFolder = f'{ROOT}/derivativesTestTest/{sub}'
-#     # Create folder if it does not exist
-#     if not os.path.exists(subFolder):
-#         os.makedirs(subFolder)
-#         print("Session directory is created")
-#
-#     # =========================================================================
-#     # Look for sessions
-#     # Collectall runs across sessions (containing both nulled and notnulled images)
-#     allRuns = sorted(glob.glob(f'{ROOT}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
-#
-#     # Initialte list for sessions
-#     sessions = []
-#     # Find all sessions
-#     for run in allRuns:
-#         for i in range(1, 3):  # We had a maximum of 2 sessions
-#             if f'ses-00{i}' in run:
-#                 sessions.append(f'ses-00{i}')
-#
-#     # Get rid of duplicates
-#     sessions = sorted(set(sessions))
-#     print(f'Found data from sessions: {sessions}')
-#
-#     # Loop over sessions
-#     for ses in sessions:
-#         print(f'Working on {ses}')
-#
-#         # Look for individual runs within session (containing both nulled and notnulled images)
-#         runs = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_{ses}_task-*run-00*_cbv.nii.gz'))
-#
-#         # Set folder for session outputs
-#         outFolder = f'{ROOT}/derivativesTestTest/{sub}/{ses}/func'
-#         # Create folder if it does not exist
-#         if not os.path.exists(outFolder):
-#             os.makedirs(outFolder)
-#             print("Session directory is created")
-#
-#         # Set folder for motion traces
-#         motionDir = f'{outFolder}/motionParameters'
-#         # Make folder to dump motion traces if it does not exist
-#         if not os.path.exists(motionDir):
-#             os.makedirs(motionDir)
-#             print("Motion directory is created")
-#
-#         for run in runs:
-#             # Get base name of run
-#             base = os.path.basename(run).rsplit('.', 2)[0][:-4]
-#             print(f'Processing run {base}')
-#
-#             # Set folder for motion traces
-#             runMotionDir = f'{motionDir}/{base}'
-#             # Make folder to dump motion traces if it does not exist
-#             if not os.path.exists(runMotionDir):
-#                 os.makedirs(runMotionDir)
-#                 print("Runwise motion directory is created")
-#
-#             for start, modality in enumerate(['notnulled', 'nulled']):
-#                 print(f'Starting with {modality}')
-#
-#                 # Load timeseries containing nulled and notnulled
-#                 nii = nb.load(run)
-#                 # Get header and affine
-#                 header = nii.header
-#                 affine = nii.affine
-#                 # Load data as array
-#                 dataComplete = nii.get_fdata()
-#
-#                 # Separate nulled and notnulled data
-#                 # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled.
-#                 # # Here, I also get rid of the noise maps by omitting the last 2 timepoints
-#                 data = dataComplete[..., start:-2:2]
-#
-#                 # Overwrite first 5 timepoints
-#                 for tp in range(5):
-#                     data[..., tp] = data[..., tp+5]
-#
-#                 # Make new nii and save
-#                 img = nb.Nifti1Image(data, header=header, affine=affine)
-#                 nb.save(img, f'{outFolder}/{base}_{modality}.nii')
-#
-#                 # Make reference image
-#                 reference = np.mean(data[:, :, :, 4:6], axis=-1)
-#
-#                 # And save it
-#                 img = nb.Nifti1Image(reference, header=header, affine=affine)
-#                 nb.save(img, f'{outFolder}/{base}_{modality}_reference.nii')
-#
-#                 # Make moma
-#                 print('Generating mask')
-#                 command = '3dAutomask '
-#                 command += f'-prefix {outFolder}/{base}_{modality}_moma.nii.gz '
-#                 command += f'-peels 3 -dilate 2  '
-#                 command += f'{outFolder}/{base}_{modality}_reference.nii'
-#                 subprocess.run(command, shell=True)
-#
-#                 # Load reference in antsPy style
-#                 fixed = ants.image_read(f'{outFolder}/{base}_{modality}_reference.nii')
-#
-#                 # Get motion mask
-#                 mask = ants.image_read(f'{outFolder}/{base}_{modality}_moma.nii.gz')
-#
-#                 # Load data in antsPy style
-#                 ts = ants.image_read(f'{outFolder}/{base}_{modality}.nii')
-#
-#                 # Perform motion correction
-#                 corrected = ants.motion_correction(ts, fixed=fixed, mask=mask)
-#                 ants.image_write(corrected['motion_corrected'], f'{outFolder}/{base}_{modality}_moco.nii')
-#
-#                 # Save transformation matrix for later
-#                 for vol, matrix in enumerate(corrected['motion_parameters']):
-#                     mat = matrix[0]
-#                     os.system(f"cp {mat} {runMotionDir}/{base}_{modality}_vol{vol:03d}.mat")
-#
-#             # =========================================================================
-#             # Compute T1w image in EPI space within run
-#
-#             t1w = computeT1w(f'{outFolder}/{base}_nulled_moco.nii',
-#                              f'{outFolder}/{base}_notnulled_moco.nii'
-#                              )
-#
-#             # Get header and affine
-#             header = nb.load(f'{outFolder}/{base}_nulled_moco.nii').header
-#             affine = nb.load(f'{outFolder}/{base}_nulled_moco.nii').affine
-#
-#             # And save the image
-#             img = nb.Nifti1Image(t1w, header=header, affine=affine)
-#             nb.save(img, f'{outFolder}/{base}_T1w.nii')
+SUBS = ['sub-10']
+
+for sub in SUBS:
+    print(f'Working on {sub}')
+
+    # Set folder for subject
+    subFolder = f'{ROOT}/derivativesTestTest/{sub}'
+    # Create folder if it does not exist
+    if not os.path.exists(subFolder):
+        os.makedirs(subFolder)
+        print("Session directory is created")
+
+    # =========================================================================
+    # Look for sessions
+    # Collectall runs across sessions (containing both nulled and notnulled images)
+    allRuns = sorted(glob.glob(f'{ROOT}/{sub}/*/func/{sub}_*_task-*run-00*_cbv.nii.gz'))
+
+    # Initialte list for sessions
+    sessions = []
+    # Find all sessions
+    for run in allRuns:
+        for i in range(1, 3):  # We had a maximum of 2 sessions
+            if f'ses-00{i}' in run:
+                sessions.append(f'ses-00{i}')
+
+    # Get rid of duplicates
+    sessions = sorted(set(sessions))
+    print(f'Found data from sessions: {sessions}')
+
+    # Loop over sessions
+    for ses in sessions:
+        print(f'Working on {ses}')
+
+        # Look for individual runs within session (containing both nulled and notnulled images)
+        runs = sorted(glob.glob(f'{ROOT}/{sub}/{ses}/func/{sub}_{ses}_task-*run-00*_cbv.nii.gz'))
+
+        # Set folder for session outputs
+        outFolder = f'{ROOT}/derivativesTestTest/{sub}/{ses}/func'
+        # Create folder if it does not exist
+        if not os.path.exists(outFolder):
+            os.makedirs(outFolder)
+            print("Session directory is created")
+
+        # Set folder for motion traces
+        motionDir = f'{outFolder}/motionParameters'
+        # Make folder to dump motion traces if it does not exist
+        if not os.path.exists(motionDir):
+            os.makedirs(motionDir)
+            print("Motion directory is created")
+
+        for run in runs:
+            # Get base name of run
+            base = os.path.basename(run).rsplit('.', 2)[0][:-4]
+            print(f'Processing run {base}')
+
+            # Set folder for motion traces
+            runMotionDir = f'{motionDir}/{base}'
+            # Make folder to dump motion traces if it does not exist
+            if not os.path.exists(runMotionDir):
+                os.makedirs(runMotionDir)
+                print("Runwise motion directory is created")
+
+            for start, modality in enumerate(['notnulled', 'nulled']):
+                print(f'Starting with {modality}')
+
+                # Load timeseries containing nulled and notnulled
+                nii = nb.load(run)
+                # Get header and affine
+                header = nii.header
+                affine = nii.affine
+                # Load data as array
+                dataComplete = nii.get_fdata()
+
+                # Separate nulled and notnulled data
+                # Start is defined by "enumerate" above. 0 for notnulled, 1 for nulled.
+                # # Here, I also get rid of the noise maps by omitting the last 2 timepoints
+                data = dataComplete[..., start:-2:2]
+
+                # Overwrite first 5 timepoints
+                for tp in range(5):
+                    data[..., tp] = data[..., tp+5]
+
+                # Make new nii and save
+                img = nb.Nifti1Image(data, header=header, affine=affine)
+                nb.save(img, f'{outFolder}/{base}_{modality}.nii')
+
+                # Make reference image
+                reference = np.mean(data[:, :, :, 4:6], axis=-1)
+
+                # And save it
+                img = nb.Nifti1Image(reference, header=header, affine=affine)
+                nb.save(img, f'{outFolder}/{base}_{modality}_reference.nii')
+
+                # Make moma
+                print('Generating mask')
+                command = '3dAutomask '
+                command += f'-prefix {outFolder}/{base}_{modality}_moma.nii.gz '
+                command += f'-peels 3 -dilate 2  '
+                command += f'{outFolder}/{base}_{modality}_reference.nii'
+                subprocess.run(command, shell=True)
+
+                # Load reference in antsPy style
+                fixed = ants.image_read(f'{outFolder}/{base}_{modality}_reference.nii')
+
+                # Get motion mask
+                mask = ants.image_read(f'{outFolder}/{base}_{modality}_moma.nii.gz')
+
+                # Load data in antsPy style
+                ts = ants.image_read(f'{outFolder}/{base}_{modality}.nii')
+
+                # Perform motion correction
+                corrected = ants.motion_correction(ts, fixed=fixed, mask=mask)
+                ants.image_write(corrected['motion_corrected'], f'{outFolder}/{base}_{modality}_moco.nii')
+
+                # Save transformation matrix for later
+                for vol, matrix in enumerate(corrected['motion_parameters']):
+                    mat = matrix[0]
+                    os.system(f"cp {mat} {runMotionDir}/{base}_{modality}_vol{vol:03d}.mat")
+
+            # =========================================================================
+            # Compute T1w image in EPI space within run
+
+            t1w = computeT1w(f'{outFolder}/{base}_nulled_moco.nii',
+                             f'{outFolder}/{base}_notnulled_moco.nii'
+                             )
+
+            # Get header and affine
+            header = nb.load(f'{outFolder}/{base}_nulled_moco.nii').header
+            affine = nb.load(f'{outFolder}/{base}_nulled_moco.nii').affine
+
+            # And save the image
+            img = nb.Nifti1Image(t1w, header=header, affine=affine)
+            nb.save(img, f'{outFolder}/{base}_T1w.nii')
 
 ############################################################################
 ############# Here, the coregistration of multiple runs starts #############
@@ -392,10 +392,6 @@ for sub in SUBS:
                 # And save the image
                 img = nb.Nifti1Image(cvarInv, header=header, affine=affine)
                 nb.save(img, f'{outFolder}/{sub}_{ses}_{runType}_T1w.nii')
-
-sub = 'sub-09'
-ses = 'ses-001'
-outFolder = f'{ROOT}/derivativesTestTest/{sub}/{ses}/func'
 
 
         if sub == 'sub-09' and ses == 'ses-001':

@@ -31,7 +31,7 @@ if not os.path.exists(outFolder):
 # Plotting
 # =================================================================
 
-SUBS = ['sub-12']
+SUBS = ['sub-10']
 
 for sub in SUBS:
     print(f'Working on {sub}')

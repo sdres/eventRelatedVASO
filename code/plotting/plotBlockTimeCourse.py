@@ -25,22 +25,22 @@ TR = 1.3
 palette = {'BOLD': 'tab:orange', 'VASO': 'tab:blue'}
 
 data = pd.read_csv('results/blockData.csv')
+for focus in ['v1', 's1']:
+    fig, ax = plt.subplots(figsize=FS)
 
-fig, ax = plt.subplots(figsize=FS)
-
-sns.lineplot(ax=ax, data=data.loc[(data['focus'] == 'v1')], x='x', y='data', hue='modality', palette=palette, linewidth=LW)
+    sns.lineplot(ax=ax, data=data.loc[(data['focus'] == focus)], x='x', y='data', hue='modality', palette=palette, linewidth=LW)
 
 
-ax.axvspan(4, 4+(30/TR), color='grey', alpha=0.2, lw=0)
-ax.set_ylabel('Signal change [%]', fontsize=labelSize)
-ax.set_xlabel('Time [s]', fontsize=labelSize)
-ax.legend(loc='lower center', fontsize=tickLabelSize)
+    ax.axvspan(4, 4+(30/TR), color='grey', alpha=0.2, lw=0)
+    ax.set_ylabel('Signal change [%]', fontsize=labelSize)
+    ax.set_xlabel('Time [s]', fontsize=labelSize)
+    ax.legend(loc='lower center', fontsize=tickLabelSize)
 
-values = (np.arange(-4,len(data['x'].unique())-4, 4)*TR).round(decimals=1)
-spacing = np.arange(0,len(data['x'].unique()), 4)
-ax.set_xticks(spacing, values, fontsize=tickLabelSize)
+    values = (np.arange(-4,len(data['x'].unique())-4, 4)*TR).round(decimals=1)
+    spacing = np.arange(0,len(data['x'].unique()), 4)
+    ax.set_xticks(spacing, values, fontsize=tickLabelSize)
 
-ax.tick_params(axis='y', labelsize=tickLabelSize)
-ax.axhline(0, linestyle='--', color='white')
-plt.savefig('results/blockTimecourseResults.png', bbox_inches='tight')
-plt.show()
+    ax.tick_params(axis='y', labelsize=tickLabelSize)
+    ax.axhline(0, linestyle='--', color='white')
+    plt.savefig(f'results/group_{focus}_blockTimecourseResults.png', bbox_inches='tight')
+    plt.show()

@@ -4,6 +4,7 @@ import numpy as np
 import glob
 import nibabel as nb
 import pandas as pd
+import os
 
 # Disable pandas warining
 pd.options.mode.chained_assignment = None
@@ -19,7 +20,7 @@ modalities = ['BOLD', 'VASO']
 # modalities = ['BOLD']
 
 # Define layer names
-layerNames = {1: 'deep', 2: 'middle', 3: 'superficial'}
+layerNames = {1: 'Deep', 2: 'Middle', 3: 'Superficial'}
 
 # Initialize lists
 subList = []  # For participants
@@ -29,6 +30,7 @@ timepointList = []  # For volumes
 dataList = []  # For extracted values
 focusList = []  # For v1/s1 focus
 contrastList = []
+runTypeList = []
 
 for sub in subs:  # Loop over participants
     print(f'Processing {sub}')
@@ -75,10 +77,12 @@ for sub in subs:  # Loop over participants
 
                 for contrast in ['visual', 'visuotactile']:
 
-                    maps = sorted(glob.glob(f'{sesFolder}/upsample/{sub}_{ses}_task-eventStim*-{contrast}_modality-{modality}_model-fir_*_ups5x.nii'))
+                    maps = sorted(glob.glob(f'{sesFolder}/upsample/{sub}_{ses}_task-eventStim*_contrast-{contrast}_modality-{modality}_model-fir_*_ups5x.nii'))
                     print(f'found {len(maps)} maps for {contrast}')
 
                     for i, map in enumerate(maps):
+                        base = os.path.basename(map)
+                        runType = base.split('_')[2][5:]
                         try:
                             dataNii = nb.load(map)
                             data = dataNii.get_fdata()
@@ -98,6 +102,7 @@ for sub in subs:  # Loop over participants
                             focusList.append(focus)
                             contrastList.append(contrast)
                             dataList.append(mean)
+                            runTypeList.append(runType)
 
 FIRdata = pd.DataFrame({'subject': subList,
                         'layer': layerList,
@@ -105,7 +110,8 @@ FIRdata = pd.DataFrame({'subject': subList,
                         'data': dataList,
                         'volume': timepointList,
                         'focus': focusList,
-                        'contrast': contrastList
+                        'contrast': contrastList,
+                        'runType': runTypeList
                         }
                        )
 # Save to .csv file

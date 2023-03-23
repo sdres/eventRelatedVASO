@@ -9,7 +9,7 @@ import nibabel as nb
 
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
-subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08']
+# subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08']
 for sub in subs:
     print('\n\n')
     print(sub)
@@ -71,6 +71,14 @@ for sub in subs:
                                 # print(command)
                                 subprocess.run(command, shell=True)
 
+                                # Cope
+                                file = f'{secondLevel[0]}/cope1.feat/stats/cope1.nii.gz'
+                                tmp = nb.load(file)
+                                command = f'cp {file} '
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visuotactile_{modality}_model-{modelType}_cope.nii.gz'
+                                print(command)
+                                subprocess.run(command, shell=True)
+
                             except:
                                 firstLevel = sorted(glob.glob(f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/*{runType}_run-001_{modality}_{modelType}.feat'))
                                 file = f'{firstLevel[0]}/stats/zstat1.nii.gz'
@@ -79,6 +87,15 @@ for sub in subs:
                                 command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visuotactile_{modality}_model-{modelType}_zstat.nii.gz'
                                 subprocess.run(command, shell=True)
                                 # print(command)
+
+                                # Cope
+                                firstLevel = sorted(glob.glob(f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/*{runType}_run-001_{modality}_{modelType}.feat'))
+                                file = f'{firstLevel[0]}/stats/cope1.nii.gz'
+                                tmp = nb.load(file)
+                                command = f'cp {file} '
+                                command += f'{statFolder}/{sub}_{ses}_task-{runType}_contrast-visuotactile_{modality}_model-{modelType}_cope.nii.gz'
+                                subprocess.run(command, shell=True)
+                                print(command)
 
                         if modelType == 'fir':
                             secondLevel = f'{ROOT}/derivativesTestTest/{sub}/{ses}/func/*{runType}_secondLevel_{modality}_{modelType}.gfeat'

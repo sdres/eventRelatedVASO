@@ -7,13 +7,9 @@ Read and save motion traces
 import ants
 import os
 import glob
-import nibabel as nb
 import numpy as np
-import subprocess
-import itertools
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+
 
 def my_ants_affine_to_distance(affine, unit):
 
@@ -35,9 +31,8 @@ def my_ants_affine_to_distance(affine, unit):
     return T, R
 
 
-SUBS = ['sub-12']
+SUBS = ['sub-10']
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
-
 
 # ============================================================================
 # Read motion parameters from transformation files
@@ -55,7 +50,7 @@ for sub in SUBS:
     sessions = []
     # Find all sessions
     for run in allRuns:
-        for i in range(1,6):  # We had a maximum of 2 sessions
+        for i in range(1, 6):  # We had a maximum of 2 sessions
             if f'ses-00{i}' in run:
                 sessions.append(f'ses-00{i}')
 
@@ -75,7 +70,6 @@ for sub in SUBS:
 
             # Set folder where motion traces were dumped
             motionDir = f'{funcDir}/motionParameters/{base}'
-
 
             for modality in ['nulled', 'notnulled']:
 
@@ -98,19 +92,17 @@ for sub in SUBS:
                 Tr = np.asarray(Tr)
                 Rt = np.asarray(Rt)
 
-                data_dict = {
-                'Tx': Tr[:, 0],
-                'Ty': Tr[:, 1],
-                'Tz': Tr[:, 2],
-                'Rx': Rt[:, 0],
-                'Ry': Rt[:, 1],
-                'Rz': Rt[:, 2]
-                }
+                data_dict = {'Tx': Tr[:, 0],
+                             'Ty': Tr[:, 1],
+                             'Tz': Tr[:, 2],
+                             'Rx': Rt[:, 0],
+                             'Ry': Rt[:, 1],
+                             'Rz': Rt[:, 2]
+                             }
 
                 pd_ses = pd.DataFrame(data=data_dict)
                 pd_ses.to_csv(os.path.join(motionDir, f'{base}_{modality}_motionTraces.csv'), index = False)
-                pd_ses.to_csv(os.path.join(motionDir, f'{base}_{modality}_motionTraces.txt'),header=False, index=False)
-
+                pd_ses.to_csv(os.path.join(motionDir, f'{base}_{modality}_motionTraces.txt'), header=False, index=False)
 
 # =================================================================
 # Get motion summary
@@ -177,10 +169,8 @@ for sub in SUBS:
                     subjects.append(sub)
                     mods.append(modality)
 
-
-            FDs = pd.DataFrame({'subject':subjects, 'volume':timepoints, 'FD':fd, 'modality': mods})
+            FDs = pd.DataFrame({'subject': subjects, 'volume': timepoints, 'FD': fd, 'modality': mods})
             FDs.to_csv(os.path.join(runMotionDir, f'{base}_FDs.csv'), index=False)
-
 
             # =========================================================================
             # Formatting motion traces for plotting

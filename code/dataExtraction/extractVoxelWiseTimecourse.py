@@ -21,8 +21,8 @@ modalities = ['BOLD', 'VASO']
 # modalities = ['BOLD']
                     
 blockResults = {}
-# for focus in ['v1','s1']:
-for focus in ['v1']:
+for focus in ['v1','s1']:
+# for focus in ['v1']:
     print(focus)
 
     blockResults[focus] = {}

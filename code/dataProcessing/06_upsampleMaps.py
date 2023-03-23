@@ -7,6 +7,7 @@ import os
 
 ROOT = '/Users/sebastiandresbach/data/eventRelatedVASO/Nifti'
 subs = ['sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
+subs = ['sub-09', 'sub-11', 'sub-12', 'sub-13', 'sub-14']
 
 for sub in subs:
     print(f'Working on {sub}')
@@ -65,7 +66,7 @@ for sub in subs:
         # ======================================================================
         # Upsample t1w
         command = f'3dresample -dxyz {xdim/5} {ydim/5} {zdim} -rmode Cu -overwrite -prefix {outFolder}/{base}_ups5x.nii -input {dataFile}'
-        subprocess.run(command, shell=True)
+        # subprocess.run(command, shell=True)
 
         # # Upsample registered Anat
         # dataFile = glob.glob(f'{sesFolder}/anat/{sub}_brain_registered*.nii')[0]
@@ -77,7 +78,7 @@ for sub in subs:
         statFolder = f'{sesFolder}/func/statMaps'
 
         # Get statistical maps
-        statMaps = sorted(glob.glob(f'{statFolder}/*'))
+        statMaps = sorted(glob.glob(f'{statFolder}/*conv*cope*'))
 
         for statMap in statMaps:
             base = os.path.basename(statMap).rsplit('.', 2)[0]
